@@ -5,7 +5,7 @@ import threading
 
 app = Flask(__name__)
 
-ACCESS_TOKEN = ""
+ACCESS_TOKEN = os.environ['FACEBOOK_TOKEN']
 
 
 def reply(user_id, msg):
