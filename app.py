@@ -1,5 +1,7 @@
 from flask import Flask, request
 import requests
+import os
+import threading
 
 app = Flask(__name__)
 
@@ -25,5 +27,10 @@ def handle_incoming_messages():
     return "ok"
 
 
-if __name__ == '__main__':
-    app.run(debug=True)
+def web_process():
+    if __name__ == '__main__':
+        port = int(os.environ.get('PORT', 80))
+        app.run(debug=True, host=os.environ.get('address', '0.0.0.0'), port=port)
+
+flask_thread = threading.Thread(target=web_process())
+flask_thread.start()
