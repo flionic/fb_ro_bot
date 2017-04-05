@@ -45,7 +45,7 @@ def reply_lib(user_id, msg=None, pload=None, err=None):
         )
         qr_sub_no = quick_replies.QuickReplyItem(
             content_type='text',
-            title='New order',
+            title='I dont want subscribe',
             payload='WANT_SUB_NO'
         )
         replies = quick_replies.QuickReplies(quick_replies=[qr_sub_games, qr_sub_movies, qr_sub_all, qr_sub_no])
@@ -72,7 +72,7 @@ def reply_lib(user_id, msg=None, pload=None, err=None):
     elif pload == 'SUB_LIVE_NO':
         qr_joke = quick_replies.QuickReplyItem(
             content_type='text',
-            title='Joke! I want subscribe.',
+            title='Joke! I want subscribe',
             payload='SUB_WANT_YES'
         )
         message = messages.Message(text='Okay. Just wait for hot news from me 😄', quick_replies=[qr_joke])
