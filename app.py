@@ -2,7 +2,8 @@ from flask import Flask, request, redirect
 import requests
 import os
 import threading
-from messengerbot import MessengerClient, messages, attachments, templates, elements
+from messengerbot import MessengerClient, attachments, templates, elements
+import messages, quick_replies
 
 app = Flask(__name__)
 
@@ -21,30 +22,34 @@ def reply(user_id, msg):
     print(resp.content)
 
 
-def reply_lib(user_id, msg='', pload='', err=''):
+def reply_lib(user_id, msg=None, pload=None, err=None):
     recipient = messages.Recipient(recipient_id=user_id)
 
     if err:
         message = messages.Message(text=err)
     elif pload == 'WANT_SUB_YES':
-        postback_sub_games = elements.PostbackButton(
+        qr_sub_games = quick_replies.QuickReplyItem(
+            content_type='text',
             title='Games',
             payload='SUB_GAMES'
         )
-        postback_sub_movies = elements.PostbackButton(
+        qr_sub_movies = quick_replies.QuickReplyItem(
+            content_type='text',
             title='Movies',
             payload='SUB_MOVIES'
         )
-        postback_sub_all = elements.PostbackButton(
-            title='All',
+        qr_sub_all = quick_replies.QuickReplyItem(
+            content_type='text',
+            title='Subscribe all',
             payload='SUB_ALL'
         )
-        template = templates.ButtonTemplate(
-            text='Please, select the category that you interests 🤔',
-            buttons=[postback_sub_games, postback_sub_movies, postback_sub_all]
+        qr_sub_no = quick_replies.QuickReplyItem(
+            content_type='text',
+            title='New order',
+            payload='WANT_SUB_NO'
         )
-        attachment = attachments.TemplateAttachment(template=template)
-        message = messages.Message(attachment=attachment)
+        replies = quick_replies.QuickReplies(quick_replies=[qr_sub_games, qr_sub_movies, qr_sub_all, qr_sub_no])
+        message = messages.Message(text='Please, select the category that you interests 🤔', quick_replies=replies)
     elif pload == 'WANT_SUB_NO':
         message = messages.Message(text='Oh, its bad 😞\nCome back anytime, we will wait for you! 😉 ')
     elif pload == 'SUB_GAMES' or pload == 'SUB_MOVIES' or pload == 'SUB_ALL':
@@ -65,7 +70,12 @@ def reply_lib(user_id, msg='', pload='', err=''):
     elif pload == 'SUB_LIVE_YES':
         message = messages.Message(text='Oh, beautiful! Thank you for subscribe, wait for news from me 😌')
     elif pload == 'SUB_LIVE_NO':
-        message = messages.Message(text='Okay. Just wait for hot news from me 😄')
+        qr_joke = quick_replies.QuickReplyItem(
+            content_type='text',
+            title='Joke! I want subscribe.',
+            payload='SUB_WANT_YES'
+        )
+        message = messages.Message(text='Okay. Just wait for hot news from me 😄', quick_replies=[qr_joke])
     else:
         web_button = elements.WebUrlButton(
             title='Show website',
