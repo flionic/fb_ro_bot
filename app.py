@@ -39,7 +39,8 @@ def reply_lib(user_id, msg='', pload=''):
     attachment = attachments.TemplateAttachment(template=template)
 
     # message = messages.Message(text=msg)
-    message = messages.Message(attachment=attachment)
+
+    message = messages.Message(text='Subscribed') if pload == 'USER_DEFINED_PAYLOAD' else messages.Message(attachment=attachment)
     request = messages.MessageRequest(recipient, message)
     messenger.send(request)
 
