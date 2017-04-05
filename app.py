@@ -21,10 +21,12 @@ def reply(user_id, msg):
     print(resp.content)
 
 
-def reply_lib(user_id, msg='', pload=''):
+def reply_lib(user_id, msg='', pload='', err=''):
     recipient = messages.Recipient(recipient_id=user_id)
 
-    if pload == 'WANT_SUB_YES':
+    if err:
+        message = messages.Message(text=err)
+    elif pload == 'WANT_SUB_YES':
         postback_sub_games = elements.PostbackButton(
             title='Games',
             payload='SUB_GAMES'
@@ -109,10 +111,10 @@ def handle_incoming_messages():
         reply_lib(sender, msg=message)
     except:
         try:
-            pload = data['entry'][0]['postback']['payload']
+            pload = data['entry'][0]['messaging'][0]['postback']['payload']
             reply_lib(sender, pload=pload)
         except:
-            pass
+            reply_lib(sender, err='Oh no, something was wrong, sorry')
     finally:
         return "ok"
 
