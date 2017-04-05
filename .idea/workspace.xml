@@ -30,8 +30,8 @@
       <file leaf-file-name="app.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/app.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="384">
-              <caret line="42" column="25" lean-forward="true" selection-start-line="42" selection-start-column="25" selection-end-line="42" selection-end-column="25" />
+            <state relative-caret-position="325">
+              <caret line="124" column="74" lean-forward="true" selection-start-line="124" selection-start-column="74" selection-end-line="124" selection-end-column="74" />
               <folding>
                 <element signature="e#0#42#0" expanded="true" />
               </folding>
@@ -497,7 +497,14 @@
       <option name="project" value="LOCAL" />
       <updated>1491433770325</updated>
     </task>
-    <option name="localTasksCounter" value="19" />
+    <task id="LOCAL-00019" summary="Refactoring btn names">
+      <created>1491434067187</created>
+      <option name="number" value="00019" />
+      <option name="presentableId" value="LOCAL-00019" />
+      <option name="project" value="LOCAL" />
+      <updated>1491434067187</updated>
+    </task>
+    <option name="localTasksCounter" value="20" />
     <servers />
   </component>
   <component name="ToolWindowManager">
@@ -550,7 +557,8 @@
     <MESSAGE value="Trying using quick_replies from local files" />
     <MESSAGE value="Added to git this files...." />
     <MESSAGE value="Renaming bad quick reply btn" />
-    <option name="LAST_COMMIT_MESSAGE" value="Renaming bad quick reply btn" />
+    <MESSAGE value="Refactoring btn names" />
+    <option name="LAST_COMMIT_MESSAGE" value="Refactoring btn names" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager />
@@ -625,8 +633,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/app.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="384">
-          <caret line="42" column="25" lean-forward="true" selection-start-line="42" selection-start-column="25" selection-end-line="42" selection-end-column="25" />
+        <state relative-caret-position="325">
+          <caret line="124" column="74" lean-forward="true" selection-start-line="124" selection-start-column="74" selection-end-line="124" selection-end-column="74" />
           <folding>
             <element signature="e#0#42#0" expanded="true" />
           </folding>
