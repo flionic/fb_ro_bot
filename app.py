@@ -21,7 +21,7 @@ def reply(user_id, msg):
     print(resp.content)
 
 
-def reply_lib(user_id, msg):
+def reply_lib(user_id, msg=''):
     recipient = messages.Recipient(recipient_id=user_id)
     # Send button template
     web_button = elements.WebUrlButton(
@@ -60,22 +60,11 @@ def verify():
 def handle_incoming_messages():
     data = request.json
     sender = data['entry'][0]['messaging'][0]['sender']['id']
-    message = data['entry'][0]['messaging'][0]['message']['text']
-    reply_lib(sender, message[::-1])
+    print(str(data))
+    message = data['entry'][0]['messaging'][0]['message']['text'][::-1] if data['entry'][0]['messaging'][0]['message'] else data['entry'][0]['postback'][0]['payload']
+    reply_lib(sender, message)
 
     return "ok"
-
-
-"""
-@app.route('/', methods=['POST'])
-def handle_incoming_messages():
-    data = request.json
-    sender = data['entry'][0]['messaging'][0]['sender']['id']
-    message = data['entry'][0]['messaging'][0]['message']['text']
-    reply(sender, message[::-1])
-
-    return "ok"
-"""
 
 
 def web_process():
