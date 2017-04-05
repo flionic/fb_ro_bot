@@ -38,7 +38,8 @@ def reply_lib(user_id, msg):
     )
     attachment = attachments.TemplateAttachment(template=template)
 
-    message = messages.Message(text=msg, attachment=attachment)
+    # message = messages.Message(text=msg)
+    message = messages.Message(attachment=attachment)
     request = messages.MessageRequest(recipient, message)
     messenger.send(request)
 
