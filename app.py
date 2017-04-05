@@ -23,24 +23,64 @@ def reply(user_id, msg):
 
 def reply_lib(user_id, msg='', pload=''):
     recipient = messages.Recipient(recipient_id=user_id)
-    # Send button template
-    web_button = elements.WebUrlButton(
-        title='Show website',
-        url='http://farbio.xyz'
-    )
-    postback_button = elements.PostbackButton(
-        title='Start chatting',
-        payload='USER_DEFINED_PAYLOAD'
-    )
-    template = templates.ButtonTemplate(
-        text='What do you want to do next?',
-        buttons=[web_button, postback_button]
-    )
-    attachment = attachments.TemplateAttachment(template=template)
+
+    if pload == 'WANT_SUB_YES':
+        postback_sub_games = elements.PostbackButton(
+            title='Games',
+            payload='SUB_GAMES'
+        )
+        postback_sub_movies = elements.PostbackButton(
+            title='Movies',
+            payload='SUB_MOVIES'
+        )
+        postback_sub_all = elements.PostbackButton(
+            title='All',
+            payload='SUB_ALL'
+        )
+        template = templates.ButtonTemplate(
+            text='Please, select the category that you interests',
+            buttons=[postback_sub_games, postback_sub_movies, postback_sub_all]
+        )
+        attachment = attachments.TemplateAttachment(template=template)
+        message = messages.Message(attachment=attachment)
+    elif pload == 'WANT_SUB_NO':
+        message = messages.Message(text='Oh, its bad :(\nCome back anytime, we will wait for you!')
+    elif pload == 'SUB_GAMES' or pload == 'SUB_MOVIES' or pload == 'SUB_ALL':
+        postback_brn_yes = elements.PostbackButton(
+            title='Yes, do it!',
+            payload='SUB_LIVE_YES'
+        )
+        postback_brn_no = elements.PostbackButton(
+            title='No, thanks',
+            payload='SUB_LIVE_NO'
+        )
+        template = templates.ButtonTemplate(
+            text='Great! Did you subscribe to notifications of live streams?',
+            buttons=[postback_brn_yes, postback_brn_no]
+        )
+        attachment = attachments.TemplateAttachment(template=template)
+        message = messages.Message(attachment=attachment)
+    else:
+        web_button = elements.WebUrlButton(
+            title='Show website',
+            url='http://farbio.xyz'
+        )
+        postback_btn_yes = elements.PostbackButton(
+            title='Yes, do it!',
+            payload='WANT_SUB_YES'
+        )
+        postback_btn_no = elements.PostbackButton(
+            title='No, thanks',
+            payload='WANT_SUB_YES'
+        )
+        template = templates.ButtonTemplate(
+            text='Are you want to subscribe hot every day news?',
+            buttons=[web_button, postback_btn_yes, postback_btn_no]
+        )
+        attachment = attachments.TemplateAttachment(template=template)
+        message = messages.Message(attachment=attachment)
 
     # message = messages.Message(text=msg)
-
-    message = messages.Message(text='Subscribed') if pload == 'USER_DEFINED_PAYLOAD' else messages.Message(attachment=attachment)
     request = messages.MessageRequest(recipient, message)
     messenger.send(request)
 

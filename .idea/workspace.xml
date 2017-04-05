@@ -30,8 +30,8 @@
       <file leaf-file-name="app.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/app.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="485">
-              <caret line="42" column="51" lean-forward="false" selection-start-line="42" selection-start-column="51" selection-end-line="42" selection-end-column="51" />
+            <state relative-caret-position="661">
+              <caret line="54" column="32" lean-forward="false" selection-start-line="54" selection-start-column="32" selection-end-line="54" selection-end-column="32" />
               <folding>
                 <element signature="e#0#32#0" expanded="true" />
               </folding>
@@ -398,7 +398,14 @@
       <option name="project" value="LOCAL" />
       <updated>1491428553815</updated>
     </task>
-    <option name="localTasksCounter" value="10" />
+    <task id="LOCAL-00010" summary="Reply if recived payload">
+      <created>1491428872517</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1491428872517</updated>
+    </task>
+    <option name="localTasksCounter" value="11" />
     <servers />
   </component>
   <component name="ToolWindowManager">
@@ -442,7 +449,8 @@
     <MESSAGE value="Use only one attachment on message" />
     <MESSAGE value="Try return message with payload param" />
     <MESSAGE value="Added giving and sending message or payload" />
-    <option name="LAST_COMMIT_MESSAGE" value="Added giving and sending message or payload" />
+    <MESSAGE value="Reply if recived payload" />
+    <option name="LAST_COMMIT_MESSAGE" value="Reply if recived payload" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager />
@@ -483,8 +491,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/app.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="485">
-          <caret line="42" column="51" lean-forward="false" selection-start-line="42" selection-start-column="51" selection-end-line="42" selection-end-column="51" />
+        <state relative-caret-position="661">
+          <caret line="54" column="32" lean-forward="false" selection-start-line="54" selection-start-column="32" selection-end-line="54" selection-end-column="32" />
           <folding>
             <element signature="e#0#32#0" expanded="true" />
           </folding>
