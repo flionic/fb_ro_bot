@@ -21,7 +21,7 @@ def reply(user_id, msg):
     print(resp.content)
 
 
-def reply_lib(user_id, msg=''):
+def reply_lib(user_id, msg='', pload=''):
     recipient = messages.Recipient(recipient_id=user_id)
     # Send button template
     web_button = elements.WebUrlButton(
@@ -56,15 +56,23 @@ def verify():
     return "Hello world", 200
 
 
+# noinspection PyBroadException
 @app.route('/', methods=['POST'])
 def handle_incoming_messages():
     data = request.json
     sender = data['entry'][0]['messaging'][0]['sender']['id']
     print(str(data))
-    message = data['entry'][0]['messaging'][0]['message']['text'][::-1] if data['entry'][0]['messaging'][0]['message'] else data['entry'][0]['postback'][0]['payload']
-    reply_lib(sender, message)
-
-    return "ok"
+    try:
+        message = data['entry'][0]['messaging'][0]['message']['text'][::-1]
+        reply_lib(sender, msg=message)
+    except:
+        try:
+            pload = data['entry'][0]['postback']['payload']
+            reply_lib(sender, pload=pload)
+        except:
+            pass
+    finally:
+        return "ok"
 
 
 def web_process():
