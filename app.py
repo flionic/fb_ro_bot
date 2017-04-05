@@ -17,6 +17,18 @@ def reply(user_id, msg):
     print(resp.content)
 
 
+@app.route('/', methods=['GET'])
+def verify():
+    # when the endpoint is registered as a webhook, it must echo back
+    # the 'hub.challenge' value it receives in the query arguments
+    if request.args.get("hub.mode") == "subscribe" and request.args.get("hub.challenge"):
+        if not request.args.get("hub.verify_token") == os.environ["VERIFY_TOKEN"]:
+            return "Verification token mismatch", 403
+        return request.args["hub.challenge"], 200
+
+    return "Hello world", 200
+
+
 @app.route('/', methods=['POST'])
 def handle_incoming_messages():
     data = request.json
@@ -31,6 +43,7 @@ def web_process():
     if __name__ == '__main__':
         port = int(os.environ.get('PORT', 80))
         app.run(debug=True, host=os.environ.get('address', '0.0.0.0'), port=port)
+
 
 flask_thread = threading.Thread(target=web_process())
 flask_thread.start()
