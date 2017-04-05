@@ -39,13 +39,9 @@ def reply_lib(user_id, msg='', pload='', err=''):
             title='All',
             payload='SUB_ALL'
         )
-        postback_btn_no = elements.PostbackButton(
-            title='Cancel',
-            payload='WANT_SUB_NO'
-        )
         template = templates.ButtonTemplate(
             text='Please, select the category that you interests 🤔',
-            buttons=[postback_sub_games, postback_sub_movies, postback_sub_all, postback_btn_no]
+            buttons=[postback_sub_games, postback_sub_movies, postback_sub_all]
         )
         attachment = attachments.TemplateAttachment(template=template)
         message = messages.Message(attachment=attachment)

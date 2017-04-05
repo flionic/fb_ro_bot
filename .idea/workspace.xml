@@ -30,8 +30,8 @@
       <file leaf-file-name="app.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/app.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="165">
-              <caret line="70" column="18" lean-forward="false" selection-start-line="70" selection-start-column="18" selection-end-line="70" selection-end-column="18" />
+            <state relative-caret-position="361">
+              <caret line="43" column="78" lean-forward="false" selection-start-line="43" selection-start-column="78" selection-end-line="43" selection-end-column="78" />
               <folding>
                 <element signature="e#0#42#0" expanded="true" />
               </folding>
@@ -91,6 +91,7 @@
   <component name="FindInProjectRecents">
     <findStrings>
       <find>user</find>
+      <find>WANT_SUB_YES</find>
     </findStrings>
   </component>
   <component name="Git.Settings">
@@ -441,7 +442,14 @@
       <option name="project" value="LOCAL" />
       <updated>1491430714204</updated>
     </task>
-    <option name="localTasksCounter" value="14" />
+    <task id="LOCAL-00014" summary="Fix payload name if user payload=WANT_SUB_NO">
+      <created>1491431541083</created>
+      <option name="number" value="00014" />
+      <option name="presentableId" value="LOCAL-00014" />
+      <option name="project" value="LOCAL" />
+      <updated>1491431541083</updated>
+    </task>
+    <option name="localTasksCounter" value="15" />
     <servers />
   </component>
   <component name="ToolWindowManager">
@@ -489,7 +497,8 @@
     <MESSAGE value="Context menu with levels for any variant subscribing" />
     <MESSAGE value="Redirect to my site and rename bad var" />
     <MESSAGE value="Fix parse payload, and added error handling" />
-    <option name="LAST_COMMIT_MESSAGE" value="Fix parse payload, and added error handling" />
+    <MESSAGE value="Fix payload name if user payload=WANT_SUB_NO" />
+    <option name="LAST_COMMIT_MESSAGE" value="Fix payload name if user payload=WANT_SUB_NO" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager />
@@ -538,8 +547,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/app.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="165">
-          <caret line="70" column="18" lean-forward="false" selection-start-line="70" selection-start-column="18" selection-end-line="70" selection-end-column="18" />
+        <state relative-caret-position="361">
+          <caret line="43" column="78" lean-forward="false" selection-start-line="43" selection-start-column="78" selection-end-line="43" selection-end-column="78" />
           <folding>
             <element signature="e#0#42#0" expanded="true" />
           </folding>
