@@ -121,17 +121,16 @@ def handle_incoming_messages():
     sender = data['entry'][0]['messaging'][0]['sender']['id']
     print(str(data))
     try:
-        if data['entry'][0]['messaging'][0]['message']['text']:
-            pload = data['entry'][0]['messaging'][0]['message']['payload']
+        if data['entry'][0]['messaging'][0]['message']['quick_reply']:
+            pload = data['entry'][0]['messaging'][0]['message']['quick_reply']['payload']
+            reply_lib(sender, pload=pload)
+        elif data['entry'][0]['messaging'][0]['postback']:
+            pload = data['entry'][0]['messaging'][0]['postback']['payload']
             reply_lib(sender, pload=pload)
         else:
             message = data['entry'][0]['messaging'][0]['message']['text'][::-1]
             reply_lib(sender, msg=message)
     except:
-        try:
-            pload = data['entry'][0]['messaging'][0]['postback']['payload']
-            reply_lib(sender, pload=pload)
-        except:
             reply_lib(sender, err='Oh no, something was wrong, sorry')
     finally:
         return "ok"
