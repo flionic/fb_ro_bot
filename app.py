@@ -39,14 +39,18 @@ def reply_lib(user_id, msg='', pload='', err=''):
             title='All',
             payload='SUB_ALL'
         )
+        postback_btn_no = elements.PostbackButton(
+            title='Cancel',
+            payload='WANT_SUB_NO'
+        )
         template = templates.ButtonTemplate(
-            text='Please, select the category that you interests',
-            buttons=[postback_sub_games, postback_sub_movies, postback_sub_all]
+            text='Please, select the category that you interests 🤔',
+            buttons=[postback_sub_games, postback_sub_movies, postback_sub_all, postback_btn_no]
         )
         attachment = attachments.TemplateAttachment(template=template)
         message = messages.Message(attachment=attachment)
     elif pload == 'WANT_SUB_NO':
-        message = messages.Message(text='Oh, its bad :(\nCome back anytime, we will wait for you!')
+        message = messages.Message(text='Oh, its bad 😞\nCome back anytime, we will wait for you! 😉 ')
     elif pload == 'SUB_GAMES' or pload == 'SUB_MOVIES' or pload == 'SUB_ALL':
         postback_brn_yes = elements.PostbackButton(
             title='Yes, do it!',
@@ -57,11 +61,15 @@ def reply_lib(user_id, msg='', pload='', err=''):
             payload='SUB_LIVE_NO'
         )
         template = templates.ButtonTemplate(
-            text='Great! Did you subscribe to notifications of live streams?',
+            text='Great! Did you subscribe to notifications of live streams? 😏',
             buttons=[postback_brn_yes, postback_brn_no]
         )
         attachment = attachments.TemplateAttachment(template=template)
         message = messages.Message(attachment=attachment)
+    elif pload == 'SUB_LIVE_YES':
+        message = messages.Message(text='Oh, beautiful! Thank you for subscribe, wait for news from me 😌')
+    elif pload == 'SUB_LIVE_NO':
+        message = messages.Message(text='Okay. Just wait for hot news from me 😄')
     else:
         web_button = elements.WebUrlButton(
             title='Show website',
@@ -73,7 +81,7 @@ def reply_lib(user_id, msg='', pload='', err=''):
         )
         postback_btn_no = elements.PostbackButton(
             title='No, thanks',
-            payload='WANT_SUB_YES'
+            payload='WANT_SUB_NO'
         )
         template = templates.ButtonTemplate(
             text='Are you want to subscribe hot every day news?',
