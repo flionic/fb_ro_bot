@@ -1,4 +1,4 @@
-from flask import Flask, request
+from flask import Flask, request, redirect
 import requests
 import os
 import threading
@@ -81,8 +81,8 @@ def reply_lib(user_id, msg='', pload=''):
         message = messages.Message(attachment=attachment)
 
     # message = messages.Message(text=msg)
-    request = messages.MessageRequest(recipient, message)
-    messenger.send(request)
+    req = messages.MessageRequest(recipient, message)
+    messenger.send(req)
 
 
 @app.route('/', methods=['GET'])
@@ -94,7 +94,8 @@ def verify():
             return "Verification token mismatch", 403
         return request.args["hub.challenge"], 200
 
-    return "Hello world", 200
+    # return "Hello world", 200
+    return redirect('http://farbio.xyz', 301)
 
 
 # noinspection PyBroadException
