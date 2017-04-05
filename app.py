@@ -40,12 +40,12 @@ def reply_lib(user_id, msg=None, pload=None, err=None):
         )
         qr_sub_all = quick_replies.QuickReplyItem(
             content_type='text',
-            title='Subscribe all',
+            title='Both',
             payload='SUB_ALL'
         )
         qr_sub_no = quick_replies.QuickReplyItem(
             content_type='text',
-            title='I dont want subscribe',
+            title='Cancel',
             payload='WANT_SUB_NO'
         )
         replies = quick_replies.QuickReplies(quick_replies=[qr_sub_games, qr_sub_movies, qr_sub_all, qr_sub_no])
