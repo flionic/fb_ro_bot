@@ -110,7 +110,7 @@ def verify():
             return "Verification token mismatch", 403
         return request.args["hub.challenge"], 200
 
-    return "Python flask webhook listener", 200
+    return "Python flask webhook listener on server: " + os.environ["SERVER_NAME"], 200
     # return redirect('http://farbio.xyz', 301)
 
 
