@@ -26,7 +26,7 @@ def db_query(uid, qid, sib=0):
         with sqldbc.cursor() as cursor:
             sql = sqlrsp[qid]
             cursor.execute(sql)
-            return cursor.fetchone()[0]
+            return cursor.fetchone()[0] if cursor.fetchone() is not None else True
     except Exception as expc:
         print(expc)
 
