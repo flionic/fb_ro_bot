@@ -32,7 +32,7 @@ def db_set_user(uid, sib):
     try:
         sqldbc = MySQLdb.connect(host=os.environ['DB_HOST'], user=os.environ['DB_USER'],
                                  password=os.environ['DB_PASS'],
-                                 db='bot_rol', autocommit=True)
+                                 db='fbmsgbot', autocommit=True)
         with sqldbc.cursor() as cursor:
             sql = f'INSERT INTO bot_rol (id, sub) VALUES ({uid}, {sib})'
             # sql = f'SELECT text FROM test1 WHERE id=\'0_{respn}\''
@@ -45,7 +45,7 @@ def db_upd_user(uid, sib):
     try:
         sqldbc = MySQLdb.connect(host=os.environ['DB_HOST'], user=os.environ['DB_USER'],
                                  password=os.environ['DB_PASS'],
-                                 db='bot_rol', autocommit=True)
+                                 db='fbmsgbot', autocommit=True)
         with sqldbc.cursor() as cursor:
             sql = f'UPDATE bot_rol SET sub={sib} WHERE id={uid})'
             # sql = f'SELECT text FROM test1 WHERE id=\'0_{respn}\''
