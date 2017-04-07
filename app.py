@@ -7,14 +7,17 @@ import messages, quick_replies
 import MySQLdb
 
 app = Flask(__name__)
-thr_id = 0
+
 # wp parse sample = site_domain + 'wp-json/wp/v2/posts?tags=38&per_page=1'
 site_domain = 'http://worket.tk/'
+
+
 def get_posts(tid, pp):
     resp = requests.get(f'{site_domain}wp-json/wp/v2/posts?tags={tid}&per_page={pp}')
     if resp.status_code == 200:
         resp.json()
         return True
+
 
 def db_query(uid, qid, sib=0):
     try:
@@ -30,25 +33,25 @@ def db_query(uid, qid, sib=0):
     except Exception as expc:
         print(expc)
 
-# Init facebook client
-messenger = MessengerClient(access_token=os.environ['FACEBOOK_TOKEN'])
 
-def reply(user_id, msg):
+def send_fb_msg(user_id, msg):
     data = {
         "recipient": {"id": user_id},
         "message": {"text": msg}
     }
-    resp = requests.post("https://graph.facebook.com/v2.6/me/messages?access_token=" + os.environ['FACEBOOK_TOKEN'], json=data)
+    resp = requests.post("https://graph.facebook.com/v2.6/me/messages?access_token=" + os.environ['FACEBOOK_TOKEN'],
+                         json=data)
     print(resp.content)
 
-
+# Init facebook client
+messenger = MessengerClient(access_token=os.environ['FACEBOOK_TOKEN'])
 def reply_lib(user_id, msg=None, pload=None, err=None):
     try:
         recipient = messages.Recipient(recipient_id=user_id)
         sub_id = db_query(user_id, 0)
         if err:
             message = messages.Message(text=err)
-        # elif sub_id is not None:
+            # elif sub_id is not None:
             # message = messages.Message(text=f'You are subscribed to: {sub_id}')
         elif pload == 'WANT_SUB_YES':
             qr_sub_games = quick_replies.QuickReplyItem(
@@ -86,7 +89,7 @@ def reply_lib(user_id, msg=None, pload=None, err=None):
                 payload='SUB_LIVE_NO'
             )
             template = templates.ButtonTemplate(
-                text=f'Great! {sub} Did you subscribe to notifications of live streams? 😏',
+                text=f'Great! Sub is {sub} Did you subscribe to notifications of live streams? 😏',
                 buttons=[postback_brn_yes, postback_brn_no]
             )
             attachment = attachments.TemplateAttachment(template=template)
@@ -143,10 +146,6 @@ def verify():
         if not request.args.get("hub.verify_token") == os.environ["VERIFY_TOKEN"]:
             return "Verification token mismatch", 403
         return request.args["hub.challenge"], 200
-
-    #return "Python flask webhook listener on server: " + os.environ["SERVER_NAME"], 200
-    #threading.Thread(target=get_posts('38', '5'), name='getnews_thread').start()
-    # threading.Thread(name='getnews_thread').join()
     return f'Python flask webhook listener on server: {os.environ["SERVER_NAME"]} - Active threads: {threading.active_count()}', 200
     # return redirect('http://farbio.xyz', 301)
 
@@ -160,7 +159,7 @@ def handle_incoming_messages():
     try:
         try:
             pload = data['entry'][0]['messaging'][0]['postback']['payload']
-            threading.Thread(target=reply_lib, args=(sender,), kwargs={'pload':pload}).start()
+            threading.Thread(target=reply_lib, args=(sender,), kwargs={'pload': pload}).start()
             # reply_lib(sender, pload=pload)
         except:
             try:
@@ -172,16 +171,15 @@ def handle_incoming_messages():
                 threading.Thread(target=reply_lib, args=(sender,), kwargs={'msg': message}).start()
                 # reply_lib(sender, msg=message)
     except Exception as excp:
-            reply_lib(sender, err=f'Exception: {excp}')
+        reply_lib(sender, err=f'Exception: {excp}')
     finally:
         return "ok"
 
 
 def web_process():
-
     if __name__ == '__main__':
-        port = int(os.environ.get('PORT', 80))
-        app.run(debug=True, host=os.environ.get('address', '0.0.0.0'), port=port)
+        app.run(debug=True, host=os.environ.get('address', '0.0.0.0'), port=int(os.environ.get('PORT', 80)))
+
 
 flask_thread = threading.Thread(target=web_process())
 flask_thread.start()
