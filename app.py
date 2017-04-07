@@ -157,17 +157,19 @@ def handle_incoming_messages():
     sender = data['entry'][0]['messaging'][0]['sender']['id']
     print(str(data))
     try:
-        try:
-            pload = data['entry'][0]['messaging'][0]['postback']['payload']
+        msg = data['entry'][0]['messaging'][0]
+        if 'postback' in msg:
+            pload = msg['postback']['payload']
             threading.Thread(target=reply_lib(sender, pload=pload)).start()
             # reply_lib(sender, pload=pload)
-        except:
-            try:
-                pload = data['entry'][0]['messaging'][0]['message']['quick_reply']['payload']
+        elif 'message' in msg:
+            msg = msg['message']
+            if 'quick_replies' in msg:
+                pload = msg['quick_reply']['payload']
                 threading.Thread(target=reply_lib(sender, pload=pload)).start()
                 # reply_lib(sender, pload=pload)
-            except:
-                message = data['entry'][0]['messaging'][0]['message']['text'][::-1]
+            if 'text' in msg:
+                message = msg['text'][::-1]
                 threading.Thread(target=reply_lib(sender, msg=message)).start()
                 # reply_lib(sender, msg=message)
     except Exception as excp:
