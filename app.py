@@ -16,7 +16,7 @@ def get_posts(tid, pp):
         resp.json()
         return True
 
-def db_query(uid, qid, sib=''):
+def db_query(uid, qid, sib=0):
     try:
         sqldbc = MySQLdb.connect(host=os.environ['DB_HOST'], user=os.environ['DB_USER'], password=os.environ['DB_PASS'],
                                  db='fbmsgbot', autocommit=True)
