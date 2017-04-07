@@ -19,7 +19,7 @@ def get_posts(tid, pp):
 def db_get_user(uid):
     try:
         sqldbc = MySQLdb.connect(host=os.environ['DB_HOST'], user=os.environ['DB_USER'], password=os.environ['DB_PASS'],
-                                 db='bot_rol', autocommit=True)
+                                 db='fbmsgbot', autocommit=True)
         with sqldbc.cursor() as cursor:
             sql = f'SELECT sub FROM bot_rol WHERE id=\'{uid}\''
             # sql = f'SELECT text FROM test1 WHERE id=\'0_{respn}\''
