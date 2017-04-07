@@ -146,7 +146,7 @@ def handle_incoming_messages():
                 # reply_lib(sender, pload=pload)
             except:
                 message = data['entry'][0]['messaging'][0]['message']['text'][::-1]
-                threading.Thread(target=reply_lib, kwargs={'msg': message}).start()
+                threading.Thread(target=reply_lib, args=sender, kwargs={'msg': message}).start()
                 # reply_lib(sender, msg=message)
     except Exception as excp:
             reply_lib(sender, err=f'Exception: {excp}')
