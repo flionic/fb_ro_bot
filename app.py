@@ -159,16 +159,16 @@ def handle_incoming_messages():
     try:
         try:
             pload = data['entry'][0]['messaging'][0]['postback']['payload']
-            threading.Thread(target=reply_lib, args=(sender,), kwargs={'pload': pload}).start()
+            threading.Thread(target=reply_lib(sender, pload=pload)).start()
             # reply_lib(sender, pload=pload)
         except:
             try:
                 pload = data['entry'][0]['messaging'][0]['message']['quick_reply']['payload']
-                threading.Thread(target=reply_lib, args=(sender,), kwargs={'pload': pload}).start()
+                threading.Thread(target=reply_lib(sender, pload=pload)).start()
                 # reply_lib(sender, pload=pload)
             except:
                 message = data['entry'][0]['messaging'][0]['message']['text'][::-1]
-                threading.Thread(target=reply_lib, args=(sender,), kwargs={'msg': message}).start()
+                threading.Thread(target=reply_lib(sender, msg=message)).start()
                 # reply_lib(sender, msg=message)
     except Exception as excp:
         reply_lib(sender, err=f'Exception: {excp}')
@@ -181,5 +181,6 @@ def web_process():
         app.run(debug=True, host=os.environ.get('address', '0.0.0.0'), port=int(os.environ.get('PORT', 80)))
 
 
+fiu = threading.Thread(target=reply_lib(1, '2', 'r'))
 flask_thread = threading.Thread(target=web_process())
 flask_thread.start()
