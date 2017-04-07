@@ -16,43 +16,19 @@ def get_posts(tid, pp):
         resp.json()
         return True
 
-def db_get_user(uid):
+def db_query(uid, qid, sib=None):
     try:
         sqldbc = MySQLdb.connect(host=os.environ['DB_HOST'], user=os.environ['DB_USER'], password=os.environ['DB_PASS'],
                                  db='fbmsgbot', autocommit=True)
+        sqlrsp = [f'SELECT sub FROM bot_rol WHERE id=\'{uid}\'',
+                  f'INSERT INTO bot_rol (id, sub) VALUES (\'{int(uid)}\', \'{int(sib)}\')',
+                  f'UPDATE bot_rol SET sub={sib} WHERE id={uid})']
         with sqldbc.cursor() as cursor:
-            sql = f'SELECT sub FROM bot_rol WHERE id=\'{uid}\''
-            # sql = f'SELECT text FROM test1 WHERE id=\'0_{respn}\''
+            sql = sqlrsp[qid]
             cursor.execute(sql)
             return cursor.fetchone()[0]
-    except Exception as excp:
-        print(excp)
-
-def db_set_user(uid, sib):
-    try:
-        sqldbc = MySQLdb.connect(host=os.environ['DB_HOST'], user=os.environ['DB_USER'],
-                                 password=os.environ['DB_PASS'],
-                                 db='fbmsgbot', autocommit=True)
-        with sqldbc.cursor() as cursor:
-            sql = f'INSERT INTO bot_rol (id, sub) VALUES (\'{int(uid)}\', \'{int(sib)}\')'
-            # sql = f'SELECT text FROM test1 WHERE id=\'0_{respn}\''
-            cursor.execute(sql)
-            return True
-    except Exception as excp:
-        print(excp)
-
-def db_upd_user(uid, sib):
-    try:
-        sqldbc = MySQLdb.connect(host=os.environ['DB_HOST'], user=os.environ['DB_USER'],
-                                 password=os.environ['DB_PASS'],
-                                 db='fbmsgbot', autocommit=True)
-        with sqldbc.cursor() as cursor:
-            sql = f'UPDATE bot_rol SET sub={sib} WHERE id={uid})'
-            # sql = f'SELECT text FROM test1 WHERE id=\'0_{respn}\''
-            cursor.execute(sql)
-            return True
-    except Exception as excp:
-        print(excp)
+    except Exception as expc:
+        print(expc)
 
 # Init facebook client
 messenger = MessengerClient(access_token=os.environ['FACEBOOK_TOKEN'])
@@ -69,11 +45,11 @@ def reply(user_id, msg):
 def reply_lib(user_id, msg=None, pload=None, err=None):
     try:
         recipient = messages.Recipient(recipient_id=user_id)
-        sub_id = db_get_user(user_id)
+        sub_id = db_query(user_id, 0)
         if err:
             message = messages.Message(text=err)
-        elif sub_id is not None:
-            message = messages.Message(text=f'You are subscribed to: {sub_id}')
+        # elif sub_id is not None:
+            # message = messages.Message(text=f'You are subscribed to: {sub_id}')
         elif pload == 'WANT_SUB_YES':
             qr_sub_games = quick_replies.QuickReplyItem(
                 content_type='text',
@@ -100,7 +76,7 @@ def reply_lib(user_id, msg=None, pload=None, err=None):
         elif pload == 'WANT_SUB_NO':
             message = messages.Message(text='Oh, its bad 😞\nCome back anytime, we will wait for you! 😉 ')
         elif pload == 'SUB_GAMES' or pload == 'SUB_MOVIES' or pload == 'SUB_ALL':
-            sub = db_set_user(user_id, 1)
+            sub = db_query(user_id, 1, 1)
             postback_brn_yes = elements.PostbackButton(
                 title='Yes, do it!',
                 payload='SUB_LIVE_YES'
