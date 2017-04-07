@@ -79,12 +79,20 @@ def reply_lib(user_id, msg=None, pload=None, err=None):
         elif pload == 'SUB_LIVE_YES':
             message = messages.Message(text='Oh, beautiful! Thank you for subscribe, wait for news from me 😌')
         elif pload == 'SUB_LIVE_NO':
-            qr_joke = quick_replies.QuickReplyItem(
-                content_type='text',
-                title='Joke! I want subscribe',
-                payload='SUB_WANT_YES'
+            postback_brn_yes = elements.PostbackButton(
+                title='Sub streams',
+                payload='SUB_LIVE_YES'
             )
-            message = messages.Message(text='Okay. Just wait for hot news from me 😄', quick_replies=[qr_joke])
+            postback_brn_no = elements.PostbackButton(
+                title='Settings',
+                payload='OPEN_SETTINGS'
+            )
+            template = templates.ButtonTemplate(
+                text='Have nice day!',
+                buttons=[postback_brn_yes, postback_brn_no]
+            )
+            attachment = attachments.TemplateAttachment(template=template)
+            message = messages.Message(text='Okay. Just wait for hot news from me 😄', attachment=attachment)
         else:
             web_button = elements.WebUrlButton(
                 title='Show website',
