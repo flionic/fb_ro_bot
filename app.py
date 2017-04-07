@@ -4,8 +4,17 @@ import os
 import threading
 from messengerbot import MessengerClient, attachments, templates, elements
 import messages, quick_replies
+import MySQLdb
 
 app = Flask(__name__)
+thr_id = 0
+# wp parse sample = site_domain + 'wp-json/wp/v2/posts?tags=38&per_page=1'
+site_domain = 'http://worket.tk/'
+def get_posts(tid, pp):
+    resp = requests.get(f'{site_domain}wp-json/wp/v2/posts?tags={tid}&per_page={pp}')
+    if resp.status_code == 200:
+        resp.json()
+        return True
 
 ACCESS_TOKEN = os.environ['FACEBOOK_TOKEN']
 
@@ -24,7 +33,6 @@ def reply(user_id, msg):
 
 def reply_lib(user_id, msg=None, pload=None, err=None):
     recipient = messages.Recipient(recipient_id=user_id)
-
     if err:
         message = messages.Message(text=err)
     elif pload == 'WANT_SUB_YES':
@@ -110,7 +118,10 @@ def verify():
             return "Verification token mismatch", 403
         return request.args["hub.challenge"], 200
 
-    return "Python flask webhook listener on server: " + os.environ["SERVER_NAME"], 200
+    #return "Python flask webhook listener on server: " + os.environ["SERVER_NAME"], 200
+    #threading.Thread(target=get_posts('38', '5'), name='getnews_thread').start()
+    # threading.Thread(name='getnews_thread').join()
+    return f'Python flask webhook listener on server: {os.environ["SERVER_NAME"]} - Active threads: {threading.active_count()}', 200
     # return redirect('http://farbio.xyz', 301)
 
 
@@ -123,16 +134,19 @@ def handle_incoming_messages():
     try:
         try:
             pload = data['entry'][0]['messaging'][0]['postback']['payload']
-            reply_lib(sender, pload=pload)
+            threading.Thread(target=reply_lib, args=sender, kwargs={'pload':pload})
+            # reply_lib(sender, pload=pload)
         except:
             try:
                 pload = data['entry'][0]['messaging'][0]['message']['quick_reply']['payload']
-                reply_lib(sender, pload=pload)
+                threading.Thread(target=reply_lib, args=sender, kwargs={'pload': pload})
+                # reply_lib(sender, pload=pload)
             except:
                 message = data['entry'][0]['messaging'][0]['message']['text'][::-1]
-                reply_lib(sender, msg=message)
-    except:
-            reply_lib(sender, err='Oh no, something was wrong, sorry')
+                threading.Thread(target=reply_lib, kwargs={'msg': message})
+                # reply_lib(sender, msg=message)
+    except Exception as excp:
+            reply_lib(sender, err=f'Exception: {excp}')
     finally:
         return "ok"
 
