@@ -34,7 +34,7 @@ def db_set_user(uid, sib):
                                  password=os.environ['DB_PASS'],
                                  db='fbmsgbot', autocommit=True)
         with sqldbc.cursor() as cursor:
-            sql = f'INSERT INTO bot_rol (id, sub) VALUES (\'{uid}\', \'{sib}\')'
+            sql = f'INSERT INTO bot_rol (id, sub) VALUES (\'{int(uid)}\', \'{int(sib)}\')'
             # sql = f'SELECT text FROM test1 WHERE id=\'0_{respn}\''
             cursor.execute(sql)
             return True
@@ -72,7 +72,7 @@ def reply_lib(user_id, msg=None, pload=None, err=None):
         sub_id = db_get_user(user_id)
         if err:
             message = messages.Message(text=err)
-        elif sub_id:
+        elif sub_id is not None:
             message = messages.Message(text=f'You are subscribed to: {sub_id}')
         elif pload == 'WANT_SUB_YES':
             qr_sub_games = quick_replies.QuickReplyItem(
@@ -206,7 +206,6 @@ def web_process():
     if __name__ == '__main__':
         port = int(os.environ.get('PORT', 80))
         app.run(debug=True, host=os.environ.get('address', '0.0.0.0'), port=port)
-
 
 flask_thread = threading.Thread(target=web_process())
 flask_thread.start()
