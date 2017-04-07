@@ -88,11 +88,11 @@ def reply_lib(user_id, msg=None, pload=None, err=None):
                 payload='OPEN_SETTINGS'
             )
             template = templates.ButtonTemplate(
-                text='Have nice day!',
+                text='Okay. Just wait for hot news from me 😄',
                 buttons=[postback_brn_yes, postback_brn_no]
             )
             attachment = attachments.TemplateAttachment(template=template)
-            message = messages.Message(text='Okay. Just wait for hot news from me 😄', attachment=attachment)
+            message = messages.Message(attachment=attachment)
         else:
             web_button = elements.WebUrlButton(
                 title='Show website',
