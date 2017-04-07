@@ -32,81 +32,84 @@ def reply(user_id, msg):
 
 
 def reply_lib(user_id, msg=None, pload=None, err=None):
-    recipient = messages.Recipient(recipient_id=user_id)
-    if err:
-        message = messages.Message(text=err)
-    elif pload == 'WANT_SUB_YES':
-        qr_sub_games = quick_replies.QuickReplyItem(
-            content_type='text',
-            title='Games',
-            payload='SUB_GAMES'
-        )
-        qr_sub_movies = quick_replies.QuickReplyItem(
-            content_type='text',
-            title='Movies',
-            payload='SUB_MOVIES'
-        )
-        qr_sub_all = quick_replies.QuickReplyItem(
-            content_type='text',
-            title='Both',
-            payload='SUB_ALL'
-        )
-        qr_sub_no = quick_replies.QuickReplyItem(
-            content_type='text',
-            title='Cancel',
-            payload='WANT_SUB_NO'
-        )
-        replies = quick_replies.QuickReplies(quick_replies=[qr_sub_games, qr_sub_movies, qr_sub_all, qr_sub_no])
-        message = messages.Message(text='Please, select the category that you interests 🤔', quick_replies=replies)
-    elif pload == 'WANT_SUB_NO':
-        message = messages.Message(text='Oh, its bad 😞\nCome back anytime, we will wait for you! 😉 ')
-    elif pload == 'SUB_GAMES' or pload == 'SUB_MOVIES' or pload == 'SUB_ALL':
-        postback_brn_yes = elements.PostbackButton(
-            title='Yes, do it!',
-            payload='SUB_LIVE_YES'
-        )
-        postback_brn_no = elements.PostbackButton(
-            title='No, thanks',
-            payload='SUB_LIVE_NO'
-        )
-        template = templates.ButtonTemplate(
-            text='Great! Did you subscribe to notifications of live streams? 😏',
-            buttons=[postback_brn_yes, postback_brn_no]
-        )
-        attachment = attachments.TemplateAttachment(template=template)
-        message = messages.Message(attachment=attachment)
-    elif pload == 'SUB_LIVE_YES':
-        message = messages.Message(text='Oh, beautiful! Thank you for subscribe, wait for news from me 😌')
-    elif pload == 'SUB_LIVE_NO':
-        qr_joke = quick_replies.QuickReplyItem(
-            content_type='text',
-            title='Joke! I want subscribe',
-            payload='SUB_WANT_YES'
-        )
-        message = messages.Message(text='Okay. Just wait for hot news from me 😄', quick_replies=[qr_joke])
-    else:
-        web_button = elements.WebUrlButton(
-            title='Show website',
-            url='http://farbio.xyz'
-        )
-        postback_btn_yes = elements.PostbackButton(
-            title='Yes, do it!',
-            payload='WANT_SUB_YES'
-        )
-        postback_btn_no = elements.PostbackButton(
-            title='No, thanks',
-            payload='WANT_SUB_NO'
-        )
-        template = templates.ButtonTemplate(
-            text='Are you want to subscribe hot every day news?',
-            buttons=[web_button, postback_btn_yes, postback_btn_no]
-        )
-        attachment = attachments.TemplateAttachment(template=template)
-        message = messages.Message(attachment=attachment)
+    try:
+        recipient = messages.Recipient(recipient_id=user_id)
+        if err:
+            message = messages.Message(text=err)
+        elif pload == 'WANT_SUB_YES':
+            qr_sub_games = quick_replies.QuickReplyItem(
+                content_type='text',
+                title='Games',
+                payload='SUB_GAMES'
+            )
+            qr_sub_movies = quick_replies.QuickReplyItem(
+                content_type='text',
+                title='Movies',
+                payload='SUB_MOVIES'
+            )
+            qr_sub_all = quick_replies.QuickReplyItem(
+                content_type='text',
+                title='Both',
+                payload='SUB_ALL'
+            )
+            qr_sub_no = quick_replies.QuickReplyItem(
+                content_type='text',
+                title='Cancel',
+                payload='WANT_SUB_NO'
+            )
+            replies = quick_replies.QuickReplies(quick_replies=[qr_sub_games, qr_sub_movies, qr_sub_all, qr_sub_no])
+            message = messages.Message(text='Please, select the category that you interests 🤔', quick_replies=replies)
+        elif pload == 'WANT_SUB_NO':
+            message = messages.Message(text='Oh, its bad 😞\nCome back anytime, we will wait for you! 😉 ')
+        elif pload == 'SUB_GAMES' or pload == 'SUB_MOVIES' or pload == 'SUB_ALL':
+            postback_brn_yes = elements.PostbackButton(
+                title='Yes, do it!',
+                payload='SUB_LIVE_YES'
+            )
+            postback_brn_no = elements.PostbackButton(
+                title='No, thanks',
+                payload='SUB_LIVE_NO'
+            )
+            template = templates.ButtonTemplate(
+                text='Great! Did you subscribe to notifications of live streams? 😏',
+                buttons=[postback_brn_yes, postback_brn_no]
+            )
+            attachment = attachments.TemplateAttachment(template=template)
+            message = messages.Message(attachment=attachment)
+        elif pload == 'SUB_LIVE_YES':
+            message = messages.Message(text='Oh, beautiful! Thank you for subscribe, wait for news from me 😌')
+        elif pload == 'SUB_LIVE_NO':
+            qr_joke = quick_replies.QuickReplyItem(
+                content_type='text',
+                title='Joke! I want subscribe',
+                payload='SUB_WANT_YES'
+            )
+            message = messages.Message(text='Okay. Just wait for hot news from me 😄', quick_replies=[qr_joke])
+        else:
+            web_button = elements.WebUrlButton(
+                title='Show website',
+                url='http://farbio.xyz'
+            )
+            postback_btn_yes = elements.PostbackButton(
+                title='Yes, do it!',
+                payload='WANT_SUB_YES'
+            )
+            postback_btn_no = elements.PostbackButton(
+                title='No, thanks',
+                payload='WANT_SUB_NO'
+            )
+            template = templates.ButtonTemplate(
+                text='Are you want to subscribe hot every day news?',
+                buttons=[web_button, postback_btn_yes, postback_btn_no]
+            )
+            attachment = attachments.TemplateAttachment(template=template)
+            message = messages.Message(attachment=attachment)
 
-    # message = messages.Message(text=msg)
-    req = messages.MessageRequest(recipient, message)
-    messenger.send(req)
+        # message = messages.Message(text=msg)
+        req = messages.MessageRequest(recipient, message)
+        messenger.send(req)
+    except Exception as excp:
+        print(excp)
 
 
 @app.route('/', methods=['GET'])
