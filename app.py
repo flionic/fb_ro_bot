@@ -164,7 +164,7 @@ def handle_incoming_messages():
             # reply_lib(sender, pload=pload)
         elif 'message' in msg:
             msg = msg['message']
-            if 'quick_replies' in msg:
+            if 'quick_reply' in msg:
                 pload = msg['quick_reply']['payload']
                 threading.Thread(target=reply_lib(sender, pload=pload)).start()
                 # reply_lib(sender, pload=pload)
