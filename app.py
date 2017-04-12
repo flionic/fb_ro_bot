@@ -1,4 +1,4 @@
-from flask import Flask, request, redirect
+from flask import Flask, request, redirect, render_template
 import requests
 import os
 import threading
@@ -21,13 +21,13 @@ def get_posts(tid, pp):
 
 def db_query(uid, qid, sib=0):
     try:
-        sqldbc = MySQLdb.connect(host=os.environ['DB_HOST'], user=os.environ['DB_USER'], password=os.environ['DB_PASS'],
+        mysql = MySQLdb.connect(host=os.environ['DB_HOST'], user=os.environ['DB_USER'], password=os.environ['DB_PASS'],
                                  db='fbmsgbot', autocommit=True)
-        sqlrsp = [f'SELECT sub FROM bot_rol WHERE id=\'{uid}\'',
+        sql_resp = [f'SELECT sub FROM bot_rol WHERE id=\'{uid}\'',
                   f'INSERT INTO bot_rol (id, sub) VALUES (\'{int(uid)}\', \'{int(sib)}\')',
                   f'UPDATE bot_rol SET sub={sib} WHERE id={uid})']
-        with sqldbc.cursor() as cursor:
-            sql = sqlrsp[qid]
+        with mysql.cursor() as cursor:
+            sql = sql_resp[qid]
             cursor.execute(sql)
             return cursor.fetchone()[0] if cursor.fetchone() is not None else True
     except Exception as expc:
@@ -43,8 +43,11 @@ def send_fb_msg(user_id, msg):
                          json=data)
     print(resp.content)
 
+
 # Init facebook client
 messenger = MessengerClient(access_token=os.environ['FACEBOOK_TOKEN'])
+
+
 def reply_lib(user_id, msg=None, pload=None, err=None):
     try:
         recipient = messages.Recipient(recipient_id=user_id)
@@ -53,84 +56,89 @@ def reply_lib(user_id, msg=None, pload=None, err=None):
             message = messages.Message(text=err)
             # elif sub_id is not None:
             # message = messages.Message(text=f'You are subscribed to: {sub_id}')
-        elif pload == 'WANT_SUB_YES':
-            qr_sub_games = quick_replies.QuickReplyItem(
+        elif pload == 'WANT_SUB_STORIES':
+            msg = f'You will start receiving the daily briefing\n' \
+                  f'You can change your subscription at any time by typing "help"\n'
+            qr_celebrity = quick_replies.QuickReplyItem(
                 content_type='text',
-                title='Games',
-                payload='SUB_GAMES'
+                title='Celebrity',
+                payload='GET_CELEBRITY'
             )
-            qr_sub_movies = quick_replies.QuickReplyItem(
+            qr_music = quick_replies.QuickReplyItem(
                 content_type='text',
-                title='Movies',
-                payload='SUB_MOVIES'
+                title='Music',
+                payload='GET_MUSIC'
             )
-            qr_sub_all = quick_replies.QuickReplyItem(
+            qr_rships = quick_replies.QuickReplyItem(
                 content_type='text',
-                title='Both',
-                payload='SUB_ALL'
+                title='Relationships',
+                payload='GET_RSHIPS'
             )
-            qr_sub_no = quick_replies.QuickReplyItem(
+            qr_lstyle = quick_replies.QuickReplyItem(
                 content_type='text',
-                title='Cancel',
-                payload='WANT_SUB_NO'
+                title='Lifestyle',
+                payload='GET_LSTYLE'
             )
-            replies = quick_replies.QuickReplies(quick_replies=[qr_sub_games, qr_sub_movies, qr_sub_all, qr_sub_no])
-            message = messages.Message(text='Please, select the category that you interests 🤔', quick_replies=replies)
-        elif pload == 'WANT_SUB_NO':
-            message = messages.Message(text='Oh, its bad 😞\nCome back anytime, we will wait for you! 😉 ')
-        elif pload == 'SUB_GAMES' or pload == 'SUB_MOVIES' or pload == 'SUB_ALL':
-            sub = db_query(user_id, 1, 1)
-            postback_brn_yes = elements.PostbackButton(
-                title='Yes, do it!',
-                payload='SUB_LIVE_YES'
-            )
-            postback_brn_no = elements.PostbackButton(
-                title='No, thanks',
-                payload='SUB_LIVE_NO'
+            replies = quick_replies.QuickReplies(quick_replies=[qr_celebrity, qr_music, qr_rships, qr_lstyle])
+            message = messages.Message(text='Would you like to see the hottest Stories now?', quick_replies=replies)
+    #############
+        elif pload == 'WANT_SUB_LIVEPROG':
+            r_msg = f'Great! We`ll send you a message before our Live Program start\n' \
+                    f'You can change your subscription at any time by typing \"help\"\n' \
+                    f'Would you like to view our recent lifestreams?'
+            messenger.send(messages.MessageRequest(recipient, messages.Message(text=r_msg)))
+            pback_lives = elements.PostbackButton(
+                title='- Yes, sure',
+                payload='WANT_SUB_LIVE'
             )
             template = templates.ButtonTemplate(
-                text=f'Great! Sub is {sub} Did you subscribe to notifications of live streams? 😏',
-                buttons=[postback_brn_yes, postback_brn_no]
+                text=f'------',
+                buttons=[pback_lives]
             )
             attachment = attachments.TemplateAttachment(template=template)
             message = messages.Message(attachment=attachment)
-        elif pload == 'SUB_LIVE_YES':
-            message = messages.Message(text='Oh, beautiful! Thank you for subscribe, wait for news from me 😌')
-        elif pload == 'SUB_LIVE_NO':
-            postback_brn_yes = elements.PostbackButton(
-                title='Sub streams',
-                payload='SUB_LIVE_YES'
+    #############
+        elif pload == 'NOTHING_SUB':
+            pback_stories = elements.PostbackButton(
+                title='Hottest Stories',
+                payload='GET_STORIES'
             )
-            postback_brn_no = elements.PostbackButton(
-                title='Settings',
-                payload='OPEN_SETTINGS'
+            pback_streams = elements.PostbackButton(
+                title='Recent Lifestreams',
+                payload='GET_STREAMS'
+            )
+            pback_help = elements.PostbackButton(
+                title='Help',
+                payload='GET_HELP'
             )
             template = templates.ButtonTemplate(
-                text='Okay. Just wait for hot news from me 😄',
-                buttons=[postback_brn_yes, postback_brn_no]
+                text='Main menu',
+                buttons=[pback_stories, pback_streams, pback_help]
             )
             attachment = attachments.TemplateAttachment(template=template)
             message = messages.Message(attachment=attachment)
+    #############
         else:
-            web_button = elements.WebUrlButton(
-                title='Show website',
-                url='http://farbio.xyz'
+            r_msg = "Hi! Welcome to Radio One Lebanon Messanger. " \
+                    "We'd love to share the hottest Celeb & Lifestyle Stories with you and notify you when our Live Programs start."
+            pback_stories = elements.PostbackButton(
+                title="- Great, send me your best stories daily.",
+                payload='WANT_SUB_STORIES'
             )
-            postback_btn_yes = elements.PostbackButton(
-                title='Yes, do it!',
-                payload='WANT_SUB_YES'
+            pback_liveprog = elements.PostbackButton(
+                title="- Love your Programs. Notify me when they start.",
+                payload='WANT_SUB_LIVEPROG'
             )
-            postback_btn_no = elements.PostbackButton(
-                title='No, thanks',
-                payload='WANT_SUB_NO'
+            pback_nosub = elements.PostbackButton(
+                title="- Not now, thank you",
+                payload='NOTHING_SUB'
             )
             template = templates.ButtonTemplate(
-                text='Are you want to subscribe hot every day news?',
-                buttons=[web_button, postback_btn_yes, postback_btn_no]
+                text=r_msg,
+                buttons=[pback_stories, pback_liveprog, pback_nosub]
             )
             attachment = attachments.TemplateAttachment(template=template)
             message = messages.Message(attachment=attachment)
-
         # message = messages.Message(text=msg)
         req = messages.MessageRequest(recipient, message)
         messenger.send(req)
@@ -148,15 +156,17 @@ def verify():
         return request.args["hub.challenge"], 200
     return f'Python flask webhook listener on server: {os.environ["SERVER_NAME"]} - Active threads: {threading.active_count()}', 200
     # return redirect('http://farbio.xyz', 301)
+    #return render_template('index.html')
 
 
 # noinspection PyBroadException
 @app.route('/', methods=['POST'])
 def handle_incoming_messages():
-    data = request.json
-    sender = data['entry'][0]['messaging'][0]['sender']['id']
-    print(str(data))
+    # noinspection PyUnreachableCode
     try:
+        data = request.json
+        sender = data['entry'][0]['messaging'][0]['sender']['id']
+        print(str(data))
         msg = data['entry'][0]['messaging'][0]
         if 'postback' in msg:
             pload = msg['postback']['payload']
@@ -175,7 +185,7 @@ def handle_incoming_messages():
     except Exception as excp:
         reply_lib(sender, err=f'Exception: {excp}')
     finally:
-        return "ok"
+        return "post: " + str(request.json)
 
 
 def web_process():
@@ -183,6 +193,5 @@ def web_process():
         app.run(debug=True, host=os.environ.get('address', '0.0.0.0'), port=int(os.environ.get('PORT', 80)))
 
 
-fiu = threading.Thread(target=reply_lib(1, '2', 'r'))
 flask_thread = threading.Thread(target=web_process())
 flask_thread.start()
