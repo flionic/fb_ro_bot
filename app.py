@@ -168,7 +168,7 @@ def reply_lib(user_id, msg=None, pload=None):
         #############
         # TODO! Взять у Кати ответ на запрос новостей
         elif pload == 'WANT_SUB_STORIES':
-            
+
             # msg = f'You will start receiving the daily briefing\n' \
             #      f'You can change your subscription at any time by typing "help"\n'
             qr_celebrity = quick_replies.QuickReplyItem(
