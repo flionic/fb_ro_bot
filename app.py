@@ -12,6 +12,7 @@ app = Flask(__name__)
 site_domain = 'http://worket.tk/'
 admin_pass = 'LYb25FwFO7zOjUO5zafgiTiyIyRbVNwqeIj'
 
+
 def get_posts(tid, pp):
     resp = requests.get(f'{site_domain}wp-json/wp/v2/posts?tags={tid}&per_page={pp}')
     if resp.status_code == 200:
@@ -33,7 +34,7 @@ def db_query(uid, qid, sib=0):
     except Exception as expc:
         print(expc)
 
-# reformat:off
+
 # SUBSCRIBE PAGE: POST "https://graph.facebook.com/v2.6/me/subscribed_apps?access_token=PAGE_ACCESS_TOKEN"
 def send_fb_msg(user_id=None, msg=None, json=None):
     data = json if json else {"recipient": {"id": user_id}, "message": {"text": msg}}
@@ -41,10 +42,12 @@ def send_fb_msg(user_id=None, msg=None, json=None):
                          json=data)
     print(f'Custom response:\n{resp.content}')
 
+
 def add_to_wlist():
-    data = {"whitelisted_domains": ["https://petersfancyapparel.com"]} # PAGE_ACCESS_TOKEN
-    resp = requests.post("https://graph.facebook.com/v2.6/me/messenger_profile?access_token=" + os.environ['FACEBOOK_TOKEN'],
-                         json=data)
+    data = {"whitelisted_domains": ["https://petersfancyapparel.com"]}  # PAGE_ACCESS_TOKEN
+    resp = requests.post(
+        "https://graph.facebook.com/v2.6/me/messenger_profile?access_token=" + os.environ['FACEBOOK_TOKEN'],
+        json=data)
     print(f'Custom response:\n{resp.content}')
 
 
@@ -61,7 +64,7 @@ def set_menu():
             {
                 "type": "postback",
                 "title": "Hottest Stories",
-                "payload": "NENU_STORIES"
+                "payload": "MENU_STORIES"
             },
             {
                 "type": "postback",
@@ -77,6 +80,7 @@ def set_menu():
         print(resp.content)
     except Exception as excp:
         print(excp)
+
 
 # Init facebook client
 messenger = MessengerClient(access_token=os.environ['FACEBOOK_TOKEN'])
@@ -107,7 +111,7 @@ def reply_lib(user_id, msg=None, pload=None, err=None):
             attachment = attachments.TemplateAttachment(template=template)
             message = messages.Message(attachment=attachment)
         #############
-        #! Subtitle и картинки для категорий настройках
+        # ! Subtitle и картинки для категорий настройках
         elif pload == 'MNG_ALERTS' or msg == 'help':
             pback_en_stor = elements.PostbackButton(
                 title='Enable Alerts',
@@ -142,8 +146,8 @@ def reply_lib(user_id, msg=None, pload=None, err=None):
             attachment = attachments.TemplateAttachment(template=template)
             message = messages.Message(attachment=attachment)
         #############
-        #TODO: Взять у светы ответ на запрос новостей
-        elif pload == 'WANT_SUB_STORIES': # go to 1
+        # TODO: Взять у светы ответ на запрос новостей
+        elif pload == 'WANT_SUB_STORIES':  # go to 1
             msg = f'You will start receiving the daily briefing\n' \
                   f'You can change your subscription at any time by typing "help"\n'
             qr_celebrity = quick_replies.QuickReplyItem(
@@ -185,16 +189,16 @@ def reply_lib(user_id, msg=None, pload=None, err=None):
             attachment = attachments.TemplateAttachment(template=template)
             message = messages.Message(attachment=attachment)
         #############
-        #! Ответы в обычных кнопках не более 20 символов
+        # ! Ответы в обычных кнопках не более 20 символов
         else:
             r_msg = "Hi! Welcome to Radio One Lebanon Messanger. " \
                     "We'd love to share the hottest Celeb & Lifestyle Stories with you and notify you when our Live Programs start."
             pback_stories = elements.PostbackButton(
-                title="Subscribe stories", # Great, send me your best stories daily.
+                title="Subscribe stories",  # Great, send me your best stories daily.
                 payload='WANT_SUB_STORIES'
             )
             pback_liveprog = elements.PostbackButton(
-                title="Subscribe Programs", # Love your Programs. Notify me when they start.
+                title="Subscribe Programs",  # Love your Programs. Notify me when they start.
                 payload='WANT_SUB_LIVEPROG'
             )
             pback_nosub = elements.PostbackButton(
@@ -212,7 +216,7 @@ def reply_lib(user_id, msg=None, pload=None, err=None):
         req = messages.MessageRequest(recipient, message)
         messenger.send(req)
     except Exception as excp:
-        print(f'Except sending msg:\n{excp}')
+        print(f'Except send msg:\n{excp}')
 
 
 @app.route('/', methods=['POST'])

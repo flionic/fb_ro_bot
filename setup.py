@@ -3,7 +3,7 @@ from distutils.core import setup
 setup(
     name='Facebook Messenger Bot',
     version='0.3',
-    packages=['app'],
+    packages=[''],
     install_requires=[
         'flask',
         'requests',
@@ -11,8 +11,8 @@ setup(
         'mysqlclient'
     ],
     url='https://farbio.xyz',
-    license='',
+    license='GNU',
     author='Bionic Leha',
     author_email='i@farbio.xyz',
-    description=''
+    description='Using Facebook Messanger Bot API for Radio One page on FB'
 )
