@@ -1,13 +1,14 @@
-from flask import Flask, request, redirect, render_template
+from flask import Flask, request
 import requests
 import os
 import threading
-from messengerbot import MessengerClient, attachments, templates, elements, webhooks
-import messages, quick_replies
+from messengerbot import MessengerClient, attachments, templates, elements
+import messages
+import quick_replies
 import MySQLdb
 
 app = Flask(__name__)
-
+# old imports #redirect, render_template, # webhooks
 # wp parse sample = site_domain + 'wp-json/wp/v2/posts?tags=38&per_page=1'
 site_domain = 'http://worket.tk/'
 admin_pass = 'LYb25FwFO7zOjUO5zafgiTiyIyRbVNwqeIj'
@@ -86,12 +87,14 @@ def set_menu():
 messenger = MessengerClient(access_token=os.environ['FACEBOOK_TOKEN'])
 
 
-def reply_lib(user_id, msg=None, pload=None, err=None):
+# noinspection PyBroadException
+def reply_lib(user_id, msg=None, pload=None):
     msg = msg.lower()
+    # noinspection PyBroadException
     try:
         recipient = messages.Recipient(recipient_id=user_id)
-        sub_id = db_query(user_id, 0)
-        ## BEGIN MENU ##
+        # sub_id = db_query(user_id, 0) # Note: check user
+        # BEGIN MENU ##
         if msg == 'test':
             pback_one = elements.PostbackButton(
                 title='Button One',
@@ -127,7 +130,7 @@ def reply_lib(user_id, msg=None, pload=None, err=None):
                 image_url='https://farbio.xyz/images/ava.jpg',
                 buttons=[pback_en_stor, pback_dis_stor]
             )
-            ## element 2
+            # element 2
             pback_en_lstyle = elements.PostbackButton(
                 title='Enable Alerts',
                 payload='EN_SUB_LSTYLE'
@@ -146,10 +149,10 @@ def reply_lib(user_id, msg=None, pload=None, err=None):
             attachment = attachments.TemplateAttachment(template=template)
             message = messages.Message(attachment=attachment)
         #############
-        # TODO: Взять у светы ответ на запрос новостей
-        elif pload == 'WANT_SUB_STORIES':  # go to 1
-            msg = f'You will start receiving the daily briefing\n' \
-                  f'You can change your subscription at any time by typing "help"\n'
+        # TODO: Взять у Кати ответ на запрос новостей
+        elif pload == 'WANT_SUB_STORIES':
+            # msg = f'You will start receiving the daily briefing\n' \
+            #      f'You can change your subscription at any time by typing "help"\n'
             qr_celebrity = quick_replies.QuickReplyItem(
                 content_type='text',
                 title='Celebrity',
@@ -211,7 +214,7 @@ def reply_lib(user_id, msg=None, pload=None, err=None):
             )
             attachment = attachments.TemplateAttachment(template=template)
             message = messages.Message(attachment=attachment)
-        ## END OF MENU ##
+        # END OF MENU #
         print(f'Response msg:\n{message}\nTo: {recipient}')
         req = messages.MessageRequest(recipient, message)
         messenger.send(req)
@@ -219,8 +222,10 @@ def reply_lib(user_id, msg=None, pload=None, err=None):
         print(f'Except send msg:\n{excp}')
 
 
+# noinspection PyBroadException
 @app.route('/', methods=['POST'])
 def handle_incoming_messages():
+    # noinspection PyBroadException
     try:
         data = request.json
         sender = data['entry'][0]['messaging'][0]['sender']['id']
