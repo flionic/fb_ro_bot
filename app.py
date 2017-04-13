@@ -10,7 +10,7 @@ app = Flask(__name__)
 
 # wp parse sample = site_domain + 'wp-json/wp/v2/posts?tags=38&per_page=1'
 site_domain = 'http://worket.tk/'
-
+admin_pass = 'LYb25FwFO7zOjUO5zafgiTiyIyRbVNwqeIj'
 
 def get_posts(tid, pp):
     resp = requests.get(f'{site_domain}wp-json/wp/v2/posts?tags={tid}&per_page={pp}')
@@ -33,15 +33,19 @@ def db_query(uid, qid, sib=0):
     except Exception as expc:
         print(expc)
 
-
-def send_fb_msg(user_id, msg):
-    data = {
-        "recipient": {"id": user_id},
-        "message": {"text": msg}
-    }
+# reformat:off
+# SUBSCRIBE PAGE: POST "https://graph.facebook.com/v2.6/me/subscribed_apps?access_token=PAGE_ACCESS_TOKEN"
+def send_fb_msg(user_id=None, msg=None, json=None):
+    data = json if json else {"recipient": {"id": user_id}, "message": {"text": msg}}
     resp = requests.post("https://graph.facebook.com/v2.6/me/messages?access_token=" + os.environ['FACEBOOK_TOKEN'],
                          json=data)
-    print(resp.content)
+    print(f'Custom response:\n{resp.content}')
+
+def add_to_wlist():
+    data = {"whitelisted_domains": ["https://petersfancyapparel.com"]} # PAGE_ACCESS_TOKEN
+    resp = requests.post("https://graph.facebook.com/v2.6/me/messenger_profile?access_token=" + os.environ['FACEBOOK_TOKEN'],
+                         json=data)
+    print(f'Custom response:\n{resp.content}')
 
 
 def set_menu():
@@ -61,11 +65,6 @@ def set_menu():
             },
             {
                 "type": "postback",
-                "title": "Send a message",
-                "payload": "MENU_SENDMSG"
-            },
-            {
-                "type": "postback",
                 "title": "Help",
                 "payload": "GET_HELP"
             }
@@ -79,55 +78,17 @@ def set_menu():
     except Exception as excp:
         print(excp)
 
-
-def send_share(uid):
-    data = {
-        "recipient": {"id": uid},
-        "message": {"attachment": {
-            "type": "template",
-            "payload": {
-                "template_type": "generic",
-                "elements": [
-                    {
-                        "title": "Breaking News: Record Thunderstorms",
-                        "subtitle": "The local area is due for record thunderstorms over the weekend.",
-                        "image_url": "https://thechangreport.com/img/lightning.png",
-                        "buttons": [
-                            {
-                                "type": "element_share"
-                            }
-                        ]
-                    }
-                ]
-            }
-        }
-        }}
-    try:
-        print('Share')
-        resp = requests.post("https://graph.facebook.com/v2.6/me/messages?access_token=" + os.environ['FACEBOOK_TOKEN'],
-                             json=data)
-        print(resp.content)
-    except Exception as excp:
-        print(excp)
-
-
 # Init facebook client
 messenger = MessengerClient(access_token=os.environ['FACEBOOK_TOKEN'])
 
 
 def reply_lib(user_id, msg=None, pload=None, err=None):
-    if msg == 'set_menu':
-        set_menu()
+    msg = msg.lower()
     try:
         recipient = messages.Recipient(recipient_id=user_id)
         sub_id = db_query(user_id, 0)
         ## BEGIN MENU ##
-        if err:
-            message = messages.Message(text=err)
-            # elif sub_id is not None:
-            # message = messages.Message(text=f'You are subscribed to: {sub_id}')
-        #############
-        elif msg == 'test':
+        if msg == 'test':
             pback_one = elements.PostbackButton(
                 title='Button One',
                 payload='PB_ONE'
@@ -146,7 +107,8 @@ def reply_lib(user_id, msg=None, pload=None, err=None):
             attachment = attachments.TemplateAttachment(template=template)
             message = messages.Message(attachment=attachment)
         #############
-        elif pload == 'MNG_ALERTS' or msg == 'mng':
+        #! Subtitle и картинки для категорий настройках
+        elif pload == 'MNG_ALERTS' or msg == 'help':
             pback_en_stor = elements.PostbackButton(
                 title='Enable Alerts',
                 payload='EN_SUB_STORIES'
@@ -157,11 +119,11 @@ def reply_lib(user_id, msg=None, pload=None, err=None):
             )
             el_stories = elements.Element(
                 title='Stories',
-                subtitle='Subtitle for this here.',
+                subtitle='Send me your best stories daily.',
                 image_url='https://farbio.xyz/images/ava.jpg',
                 buttons=[pback_en_stor, pback_dis_stor]
             )
-
+            ## element 2
             pback_en_lstyle = elements.PostbackButton(
                 title='Enable Alerts',
                 payload='EN_SUB_LSTYLE'
@@ -172,7 +134,7 @@ def reply_lib(user_id, msg=None, pload=None, err=None):
             )
             el_lifestyle = elements.Element(
                 title='Life Programs',
-                subtitle='Subtitle for this here.',
+                subtitle='Love your Programs. Notify me when they start.',
                 image_url='https://getmdl.io/assets/demos/welcome_card.jpg',
                 buttons=[pback_en_lstyle, pback_dis_lstyle]
             )
@@ -180,7 +142,8 @@ def reply_lib(user_id, msg=None, pload=None, err=None):
             attachment = attachments.TemplateAttachment(template=template)
             message = messages.Message(attachment=attachment)
         #############
-        elif pload == 'WANT_SUB_STORIES':
+        #TODO: Взять у светы ответ на запрос новостей
+        elif pload == 'WANT_SUB_STORIES': # go to 1
             msg = f'You will start receiving the daily briefing\n' \
                   f'You can change your subscription at any time by typing "help"\n'
             qr_celebrity = quick_replies.QuickReplyItem(
@@ -222,19 +185,20 @@ def reply_lib(user_id, msg=None, pload=None, err=None):
             attachment = attachments.TemplateAttachment(template=template)
             message = messages.Message(attachment=attachment)
         #############
+        #! Ответы в обычных кнопках не более 20 символов
         else:
             r_msg = "Hi! Welcome to Radio One Lebanon Messanger. " \
                     "We'd love to share the hottest Celeb & Lifestyle Stories with you and notify you when our Live Programs start."
             pback_stories = elements.PostbackButton(
-                title="stories",
+                title="Subscribe stories", # Great, send me your best stories daily.
                 payload='WANT_SUB_STORIES'
             )
             pback_liveprog = elements.PostbackButton(
-                title="programs",
+                title="Subscribe Programs", # Love your Programs. Notify me when they start.
                 payload='WANT_SUB_LIVEPROG'
             )
             pback_nosub = elements.PostbackButton(
-                title="not",
+                title="No now, thank you",
                 payload='NOTHING_SUB'
             )
             template = templates.ButtonTemplate(
@@ -244,10 +208,35 @@ def reply_lib(user_id, msg=None, pload=None, err=None):
             attachment = attachments.TemplateAttachment(template=template)
             message = messages.Message(attachment=attachment)
         ## END OF MENU ##
+        print(f'Response msg:\n{message}\nTo: {recipient}')
         req = messages.MessageRequest(recipient, message)
         messenger.send(req)
     except Exception as excp:
-        print(f'Except sending message: {excp}')
+        print(f'Except sending msg:\n{excp}')
+
+
+@app.route('/', methods=['POST'])
+def handle_incoming_messages():
+    try:
+        data = request.json
+        sender = data['entry'][0]['messaging'][0]['sender']['id']
+        msg = data['entry'][0]['messaging'][0]
+        print(f'Request: {data}')
+        if 'postback' in msg:
+            pload = msg['postback']['payload']
+            threading.Thread(target=reply_lib(sender, pload=pload)).start()
+        elif 'message' in msg:
+            msg = msg['message']
+            if 'quick_reply' in msg:
+                pload = msg['quick_reply']['payload']
+                threading.Thread(target=reply_lib(sender, pload=pload)).start()
+            elif 'text' in msg:
+                message = msg['text']
+                threading.Thread(target=reply_lib(sender, msg=message)).start()
+    except Exception as excp:
+        print(f'Except hand_msg: {excp}')
+    finally:
+        return f'post: {request.json}'
 
 
 @app.route('/', methods=['GET'])
@@ -258,44 +247,7 @@ def verify():
         if not request.args.get("hub.verify_token") == os.environ["VERIFY_TOKEN"]:
             return "Verification token mismatch", 403
         return request.args["hub.challenge"], 200
-    return f'Python flask webhook listener on server: {os.environ["SERVER_NAME"]} - Active threads: {threading.active_count()}', 200
-    # return redirect('http://farbio.xyz', 301)
-    # return render_template('index.html')
-
-
-# noinspection PyBroadException
-@app.route('/', methods=['POST'])
-def handle_incoming_messages():
-    # noinspection PyUnreachableCode
-    try:
-        data = request.json
-        sender = data['entry'][0]['messaging'][0]['sender']['id']
-        print(str(data))
-        msg = data['entry'][0]['messaging'][0]
-        if 'postback' in msg:
-            pload = msg['postback']['payload']
-            threading.Thread(target=reply_lib(sender, pload=pload)).start()
-            # reply_lib(sender, pload=pload)
-        elif 'message' in msg:
-            msg = msg['message']
-            if 'quick_reply' in msg:
-                pload = msg['quick_reply']['payload']
-                threading.Thread(target=reply_lib(sender, pload=pload)).start()
-                # reply_lib(sender, pload=pload)
-            elif 'text' in msg:
-                message = msg['text']
-                # message = msg['text'][::-1]
-                if message == 'share1':
-                    send_share(sender)
-                elif message == 'share2':
-                    send_share2(sender)
-                else:
-                    threading.Thread(target=reply_lib(sender, msg=message)).start()
-                    # reply_lib(sender, msg=message)
-    except Exception as excp:
-        reply_lib(sender, err=f'Exception: {excp}')
-    finally:
-        return "post: " + str(request.json)
+    return f'Python WebServer | Active threads: {threading.active_count()}', 200
 
 
 def web_process():
