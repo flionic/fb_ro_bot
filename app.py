@@ -1,4 +1,5 @@
-from flask import Flask, request
+import datetime
+from flask import Flask, request, render_template, Markup
 import requests
 import os
 import threading
@@ -6,8 +7,10 @@ from messengerbot import MessengerClient, attachments, templates, elements
 import messages
 import quick_replies
 import MySQLdb
+import logging
+from logging import Formatter
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='web/static', template_folder='web')
 # old imports #redirect, render_template, # webhooks
 # wp parse sample = site_domain + 'wp-json/wp/v2/posts?tags=38&per_page=1'
 site_domain = 'http://worket.tk/'
@@ -32,8 +35,8 @@ def db_query(uid, qid, sib=0):
             sql = sql_resp[qid]
             cursor.execute(sql)
             return cursor.fetchone()[0] if cursor.fetchone() is not None else True
-    except Exception as expc:
-        print(expc)
+    except Exception as excp:
+        app.logger.exception('Database query', exc_info=excp)
 
 
 # Facebook Manual Module
@@ -41,21 +44,21 @@ def subscribe_this(domains):  # -> :type domain: list
     data = {"whitelisted_domains": domains}
     resp = requests.post(
         "https://graph.facebook.com/v2.6/me/subscribed_apps?access_token=" + os.environ['FACEBOOK_TOKEN'], json=data)
-    print(f'Suscribe this:\n{resp.content}')
+    app.logger.info(f'Subscribe this:\n{resp.content}')
 
 
 def send_fb_msg(user_id=None, msg=None, json=None):
     data = json if json else {"recipient": {"id": user_id}, "message": {"text": msg}}
     resp = requests.post("https://graph.facebook.com/v2.6/me/messages?access_token=" + os.environ['FACEBOOK_TOKEN'],
                          json=data)
-    print(f'Custom response:\n{resp.content}')
+    app.logger.info(f'Send message: \n{resp.content}')
 
 
 def add_to_wlist(domains):  # -> :type domain: list
     data = {"whitelisted_domains": domains}  # -> :type domain: list
     resp = requests.post(
         "https://graph.facebook.com/v2.6/me/messenger_profile?access_token=" + os.environ['FACEBOOK_TOKEN'], json=data)
-    print(f'Custom response:\n{resp.content}')
+    app.logger.info(f'Add domain to white list:\n{resp.content}')
 
 
 def set_start_msg(payload):  # -> :type payload: string
@@ -64,9 +67,13 @@ def set_start_msg(payload):  # -> :type payload: string
             "payload": payload
         }
     }
-    resp = requests.post(
-        "https://graph.facebook.com/v2.6/me/messenger_profile?access_token=" + os.environ['FACEBOOK_TOKEN'], json=data)
-    print(f'Set start payload:\n{resp.content}')
+    try:
+        resp = requests.post(
+            "https://graph.facebook.com/v2.6/me/messenger_profile?access_token=" + os.environ['FACEBOOK_TOKEN'],
+            json=data)
+        app.logger.info(f'Set start payload: {resp.content}')
+    except Exception as excp:
+        app.logger.exception('Set start msg', exc_info=excp)
 
 
 def set_menu():
@@ -91,22 +98,21 @@ def set_menu():
             }
         ]}
     try:
-        print('Trying set menu: ')
         resp = requests.post(
             "https://graph.facebook.com/v2.6/me/thread_settings?access_token=" + os.environ['FACEBOOK_TOKEN'],
             json=data)
-        print(resp.content)
+        app.logger.info(f'Set FB Menu: {resp.content}')
     except Exception as excp:
-        print(excp)
+        app.logger.exception('Set FB Menu', exc_info=excp)
 
 
 # Init facebook client
 messenger = MessengerClient(access_token=os.environ['FACEBOOK_TOKEN'])
 
 
+# noinspection PyBroadException
 def reply_lib(user_id, msg=None, pload=None):
-    msg = msg.lower()
-    # noinspection PyBroadException
+    msg = msg.lower() if msg else ''
     try:
         recipient = messages.Recipient(recipient_id=user_id)
         # sub_id = db_query(user_id, 0) # Note: check user
@@ -233,27 +239,24 @@ def reply_lib(user_id, msg=None, pload=None):
             attachment = attachments.TemplateAttachment(template=template)
             message = messages.Message(attachment=attachment)
         # END OF MENU #
-        print(f'Response msg:\n{message}\nTo: {recipient}')
+        app.logger.info(f'Response msg:\n{message}\nTo: {recipient}')
         req = messages.MessageRequest(recipient, message)
         messenger.send(req)
     except Exception as excp:
-        print(f'Except send msg:\n{excp}')
+        app.logger.exception('Except send_msg:', exc_info=excp)
 
 
-# noinspection PyBroadException
 @app.route('/', methods=['POST'])
 def handle_incoming_messages():
-    # noinspection PyBroadException
     try:
         data = request.json
         sender = data['entry'][0]['messaging'][0]['sender']['id']
         msg = data['entry'][0]['messaging'][0]
-        print(f'Request: {data}')
+        app.logger.info(f'Request: {data}')
         if 'postback' in msg:
             pload = msg['postback']['payload']
             threading.Thread(target=reply_lib(sender, pload=pload)).start()
         elif 'message' in msg:
-            msg = msg['message']
             if 'quick_reply' in msg:
                 pload = msg['quick_reply']['payload']
                 threading.Thread(target=reply_lib(sender, pload=pload)).start()
@@ -261,26 +264,37 @@ def handle_incoming_messages():
                 message = msg['text']
                 threading.Thread(target=reply_lib(sender, msg=message)).start()
     except Exception as excp:
-        print(f'Except hand_msg: {excp}')
+        app.logger.exception('Except hand_msg:', exc_info=excp)
     finally:
         return f'post: {request.json}'
 
 
 @app.route('/', methods=['GET'])
-def verify():
+def verify(get_log=''):
     # when the endpoint is registered as a webhook, it must echo back
     # the 'hub.challenge' value it receives in the query arguments
     if request.args.get("hub.mode") == "subscribe" and request.args.get("hub.challenge"):
         if not request.args.get("hub.verify_token") == os.environ["VERIFY_TOKEN"]:
             return "Verification token mismatch", 403
         return request.args["hub.challenge"], 200
-    return f'Python WebServer | Active threads: {threading.active_count()}', 200
+    for line in list(open('file.log')):
+        if 'ERROR' in line:
+            line = '<span style="color: #F44336">' + line + '</span>'
+        elif 'WARNING' in line:
+            line = '<span style="color: #9C27B0">' + line + '</span>'
+        get_log += line
+    return render_template('log.html', log_text=Markup(get_log), date=datetime.datetime.now(),
+                           threads=threading.active_count())
 
 
-def web_process():
+def web_thread():
     if __name__ == '__main__':
+        handler = logging.FileHandler('file.log')
+        handler.setLevel(logging.INFO)
+        handler.setFormatter(Formatter('%(asctime)s | %(levelname)s: %(message)s'))
+        app.logger.addHandler(handler)
         app.run(debug=True, host=os.environ.get('address', '0.0.0.0'), port=int(os.environ.get('PORT', 80)))
 
 
-flask_thread = threading.Thread(target=web_process())
+flask_thread = threading.Thread(target=web_thread())
 flask_thread.start()
