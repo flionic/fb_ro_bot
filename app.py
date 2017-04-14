@@ -125,7 +125,7 @@ messenger = MessengerClient(access_token=os.environ['FACEBOOK_TOKEN'])
 
 
 # noinspection PyBroadException
-def reply_lib(user_id, msg=None, pload=None):
+def reply_lib(user_id, msg=None, pload=None, message=None):
     msg = msg.upper() if msg else ''
     try:
         recipient = messages.Recipient(recipient_id=user_id)
@@ -244,7 +244,7 @@ def reply_lib(user_id, msg=None, pload=None):
         elif pload == 'DIS_SUB_STORIES':
             if int(sub_id) == 1 or int(sub_id) == 3:
                 db_query(user_id, 'UPDATE', int(sub_id) - 1)
-            message = messages.Message(text='OK')
+            reply_lib(user_id, pload='MNG_ALERTS')
         #############
         elif pload == 'EN_SUB_LSTYLE':
             r_msg = f'\nYou will start receiving the daily briefing\n' \
@@ -280,7 +280,7 @@ def reply_lib(user_id, msg=None, pload=None):
         elif pload == 'DIS_SUB_LSTYLE':
             if int(sub_id) == 2 or int(sub_id) == 3:
                 db_query(user_id, 'UPDATE', int(sub_id) - 2)
-            message = messages.Message(text='OK')
+            reply_lib(user_id, pload='MNG_ALERTS')
         #############
         elif pload == 'WANT_SUB_LIVEPROG':
             r_msg = f'Great! We`ll send you a message before our Live Program start\n' \
@@ -335,8 +335,9 @@ def reply_lib(user_id, msg=None, pload=None):
             message = messages.Message(text=r_msg, quick_replies=replies)
         # END OF MENU #
         app.logger.info(f'Response for {user_id}')
-        req = messages.MessageRequest(recipient, message)
-        messenger.send(req)
+        if message:
+            req = messages.MessageRequest(recipient, message)
+            messenger.send(req)
     except Exception as excp:
         app.logger.exception('Except send_msg:', exc_info=excp)
 
