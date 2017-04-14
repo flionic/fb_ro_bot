@@ -26,26 +26,33 @@ def get_posts(tid, pp):
         return True
 
 
-def db_query(uid, qid, sib=0):
+def db_query(user_id, query, sub_ib=0):
     try:
         mysql = MySQLdb.connect(host=os.environ['DB_HOST'], user=os.environ['DB_USER'], password=os.environ['DB_PASS'],
                                 db='fbmsgbot', autocommit=True)
-        sql_resp = [f'SELECT sub FROM bot_rol WHERE id=\'{uid}\'',
-                    f'INSERT INTO bot_rol (id, sub) VALUES (\'{int(uid)}\', \'{int(sib)}\')',
-                    f'UPDATE bot_rol SET sub={sib} WHERE id={uid})']
+        sql_req = {'SELECT': f'SELECT sub_id FROM bot_rol WHERE id=\'{int(user_id)}\'',
+                   'INSERT': f'INSERT INTO bot_rol (id, sub_id) VALUES (\'{int(user_id)}\', \'{int(sub_ib)}\')',
+                   'UPDATE': f'UPDATE bot_rol SET sub_id={sub_ib} WHERE id={int(user_id)}'}
         with mysql.cursor() as cursor:
-            sql = sql_resp[qid]
+            sql = sql_req[query]
+            app.logger.info(f'SQL Req: {sql_req[query]}')
             cursor.execute(sql)
-            return cursor.fetchone()[0] if cursor.fetchone() is not None else True
+            row = cursor.fetchone()
+            sql_resp = row[0] if row is not None else None
+            app.logger.info(f'SQL Resp: {sql_resp}')
+            if query == 'SELECT':
+                return sql_resp if sql_resp else None
     except Exception as excp:
         app.logger.exception('Database query', exc_info=excp)
+        return None
 
 
 # Facebook Manual Module
 def subscribe_this(domains):  # -> :type domain: list
     data = {"whitelisted_domains": domains}
     resp = requests.post(
-        "https://graph.facebook.com/v2.6/me/subscribed_apps?access_token=" + os.environ['FACEBOOK_TOKEN'], json=data)
+        "https://graph.facebook.com/v2.6/me/subscribed_apps?access_token=" + os.environ['FACEBOOK_TOKEN'],
+        json=data)
     app.logger.info(f'Subscribe this:\n{resp.content}')
 
 
@@ -59,7 +66,8 @@ def send_fb_msg(user_id=None, msg=None, json=None):
 def add_to_wlist(domains):  # -> :type domain: list
     data = {"whitelisted_domains": domains}  # -> :type domain: list
     resp = requests.post(
-        "https://graph.facebook.com/v2.6/me/messenger_profile?access_token=" + os.environ['FACEBOOK_TOKEN'], json=data)
+        "https://graph.facebook.com/v2.6/me/messenger_profile?access_token=" + os.environ['FACEBOOK_TOKEN'],
+        json=data)
     app.logger.info(f'Add domain to white list:\n{resp.content}')
 
 
@@ -74,8 +82,10 @@ def set_start_msg(payload):  # -> :type payload: string
             "https://graph.facebook.com/v2.6/me/messenger_profile?access_token=" + os.environ['FACEBOOK_TOKEN'],
             json=data)
         app.logger.info(f'Set start payload: {resp.content}')
+        return 'OK'
     except Exception as excp:
         app.logger.exception('Set start msg', exc_info=excp)
+        return f'{excp}\nSee log for details'
 
 
 def set_menu():
@@ -104,8 +114,10 @@ def set_menu():
             "https://graph.facebook.com/v2.6/me/thread_settings?access_token=" + os.environ['FACEBOOK_TOKEN'],
             json=data)
         app.logger.info(f'Set FB Menu: {resp.content}')
+        return 'OK'
     except Exception as excp:
         app.logger.exception('Set FB Menu', exc_info=excp)
+        return f'{excp}\nSee log for details'
 
 
 # Init facebook client
@@ -117,7 +129,8 @@ def reply_lib(user_id, msg=None, pload=None):
     msg = msg.upper() if msg else ''
     try:
         recipient = messages.Recipient(recipient_id=user_id)
-        # sub_id = db_query(user_id, 0) # Note: check user
+        sub_id = db_query(user_id, 'SELECT')  # Note: check user
+        app.logger.info(f'User: {user_id} | Subscribe id: {sub_id}')
         # BEGIN MENU ##
         # TODO! Ответы в обычных кнопках не более 20 символов
         if pload == 'START_MESSAGE' or msg == 'START_MESSAGE':
@@ -141,6 +154,8 @@ def reply_lib(user_id, msg=None, pload=None):
             )
             attachment = attachments.TemplateAttachment(template=template)
             message = messages.Message(attachment=attachment)
+        elif msg == 'SET_START_PLOAD':
+            message = messages.Message(text=set_start_msg('START_MESSAGE'))
         elif pload == 'SETTINGS' or msg == 'HELP':
             pback_mng_alerts = elements.PostbackButton(
                 title='Manage you alerts',
@@ -157,44 +172,52 @@ def reply_lib(user_id, msg=None, pload=None):
             message = messages.Message(attachment=attachment)
         #############
         # TODO! Subtitle и картинки для категорий настройках
-        elif pload == 'MNG_ALERTS':
-            pback_en_stor = elements.PostbackButton(
-                title='Enable Alerts',
-                payload='EN_SUB_STORIES'
-            )
-            pback_dis_stor = elements.PostbackButton(
-                title='Disable Alerts',
-                payload='DIS_SUB_STORIES'
-            )
+        elif pload == 'MNG_ALERTS' or msg == 'MNG_ALERTS':
+            if int(sub_id) == 1 or int(sub_id) == 3:
+                pback_stor = elements.PostbackButton(
+                    title='Disable Alerts',
+                    payload='DIS_SUB_STORIES'
+                )
+            else:
+                pback_stor = elements.PostbackButton(
+                    title='Enable Alerts',
+                    payload='EN_SUB_STORIES'
+                )
             el_stories = elements.Element(
                 title='Stories',
                 subtitle='Send me your best stories daily.',
                 image_url='https://farbio.xyz/images/ava.jpg',
-                buttons=[pback_en_stor, pback_dis_stor]
+                buttons=[pback_stor]
             )
             # element 2
-            pback_en_lstyle = elements.PostbackButton(
-                title='Enable Alerts',
-                payload='EN_SUB_LSTYLE'
-            )
-            pback_dis_lstyle = elements.PostbackButton(
-                title='Disable Alerts',
-                payload='DIS_SUB_LSTYLE'
-            )
+            if int(sub_id) == 2 or int(sub_id) == 3:
+                pback_lstyle = elements.PostbackButton(
+                    title='Disable Alerts',
+                    payload='DIS_SUB_LSTYLE'
+                )
+            else:
+                pback_lstyle = elements.PostbackButton(
+                    title='Enable Alerts',
+                    payload='EN_SUB_LSTYLE'
+                )
             el_lifestyle = elements.Element(
                 title='Life Programs',
                 subtitle='Love your Programs. Notify me when they start.',
                 image_url='https://getmdl.io/assets/demos/welcome_card.jpg',
-                buttons=[pback_en_lstyle, pback_dis_lstyle]
+                buttons=[pback_lstyle]
             )
             template = templates.GenericTemplate([el_stories, el_lifestyle])
             attachment = attachments.TemplateAttachment(template=template)
             message = messages.Message(attachment=attachment)
         #############
-        elif pload == 'WANT_SUB_STORIES' or msg == 'WANT_SUB_STORIES':
-            r_msg = f'You will start receiving the daily briefing\n' \
+        elif pload == 'EN_SUB_STORIES' or msg == 'EN_SUB_STORIES':
+            r_msg = f'\nYou will start receiving the daily briefing\n' \
                     f'You can change your subscription at any time by typing "help"\n' \
                     f'Would you like to see the hottest Stories now?'
+            if sub_id and int(sub_id) != 1 and int(sub_id) != 3:
+                db_query(user_id, 'UPDATE', int(sub_id) + 1)
+            elif not sub_id:
+                db_query(user_id, 'INSERT', 1)
             qr_celebrity = quick_replies.QuickReplyItem(
                 content_type='text',
                 title='Celebrity',
@@ -217,6 +240,47 @@ def reply_lib(user_id, msg=None, pload=None):
             )
             replies = quick_replies.QuickReplies(quick_replies=[qr_celebrity, qr_music, qr_rships, qr_lstyle])
             message = messages.Message(text=r_msg, quick_replies=replies)
+        #############
+        elif pload == 'DIS_SUB_STORIES':
+            if int(sub_id) == 1 or int(sub_id) == 3:
+                db_query(user_id, 'UPDATE', int(sub_id) - 1)
+            message = messages.Message(text='OK')
+        #############
+        elif pload == 'EN_SUB_LSTYLE':
+            r_msg = f'\nYou will start receiving the daily briefing\n' \
+                    f'You can change your subscription at any time by typing "help"\n' \
+                    f'Would you like to see the hottest Stories now?'
+            if sub_id and int(sub_id) != 2 and int(sub_id) != 3:
+                db_query(user_id, 'UPDATE', int(sub_id) + 2)
+            elif not sub_id:
+                db_query(user_id, 'INSERT', 2)
+            qr_celebrity = quick_replies.QuickReplyItem(
+                content_type='text',
+                title='Celebrity',
+                payload='GET_CELEBRITY'
+            )
+            qr_music = quick_replies.QuickReplyItem(
+                content_type='text',
+                title='Music',
+                payload='GET_MUSIC'
+            )
+            qr_rships = quick_replies.QuickReplyItem(
+                content_type='text',
+                title='Relationships',
+                payload='GET_RSHIPS'
+            )
+            qr_lstyle = quick_replies.QuickReplyItem(
+                content_type='text',
+                title='Lifestyle',
+                payload='GET_LSTYLE'
+            )
+            replies = quick_replies.QuickReplies(quick_replies=[qr_celebrity, qr_music, qr_rships, qr_lstyle])
+            message = messages.Message(text=r_msg, quick_replies=replies)
+        #############
+        elif pload == 'DIS_SUB_LSTYLE':
+            if int(sub_id) == 2 or int(sub_id) == 3:
+                db_query(user_id, 'UPDATE', int(sub_id) - 2)
+            message = messages.Message(text='OK')
         #############
         elif pload == 'WANT_SUB_LIVEPROG':
             r_msg = f'Great! We`ll send you a message before our Live Program start\n' \
@@ -288,8 +352,8 @@ def handle_incoming_messages():
             pload = entry_msg['postback']['payload']
             threading.Thread(target=reply_lib(sender, pload=pload)).start()
         elif 'message' in entry_msg:
-            if 'quick_reply' in entry_msg:
-                pload = entry_msg['quick_reply']['payload']
+            if 'quick_reply' in entry_msg['message']:
+                pload = entry_msg['message']['quick_reply']['payload']
                 threading.Thread(target=reply_lib(sender, pload=pload)).start()
             elif 'text' in entry_msg['message']:
                 message = entry_msg['message']['text']
