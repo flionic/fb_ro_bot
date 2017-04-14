@@ -218,7 +218,7 @@ def reply_lib(user_id, msg=None, pload=None):
         #############
         # TODO! Ответы в обычных кнопках не более 20 символов
         else:
-            r_msg = "Hi! Welcome to Radio One Lebanon Messanger." \
+            r_msg = "Hi! Welcome to Radio One Lebanon Messenger." \
                     "We'd love to share the hottest Celeb & Lifestyle Stories with you and notify you when our Live Programs start."
             pback_stories = elements.PostbackButton(
                 title="Subscribe stories",  # Great, send me your best stories daily.
@@ -239,7 +239,7 @@ def reply_lib(user_id, msg=None, pload=None):
             attachment = attachments.TemplateAttachment(template=template)
             message = messages.Message(attachment=attachment)
         # END OF MENU #
-        app.logger.info(f'Response msg:\n{message}\nTo: {recipient}')
+        app.logger.info(f'Response msg: {message}\nTo: {recipient}')
         req = messages.MessageRequest(recipient, message)
         messenger.send(req)
     except Exception as excp:
@@ -279,10 +279,10 @@ def verify(get_log=''):
         return request.args["hub.challenge"], 200
     for line in list(open('file.log')):
         if 'ERROR' in line:
-            line = '<span style="color: #F44336">' + line + '</span>'
+            line = '<span style="color: #F44336">• ' + line + '</span>'
         elif 'WARNING' in line:
-            line = '<span style="color: #9C27B0">' + line + '</span>'
-        get_log += line
+            line = '<span style="color: #9C27B0">• ' + line + '</span>'
+        get_log += '• ' + line
     return render_template('log.html', log_text=Markup(get_log), date=datetime.datetime.now(),
                            threads=threading.active_count())
 
