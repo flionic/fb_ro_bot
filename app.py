@@ -17,6 +17,8 @@ site_domain = 'http://worket.tk/'
 admin_pass = 'LYb25FwFO7zOjUO5zafgiTiyIyRbVNwqeIj'
 
 
+# lives link https://www.facebook.com/Radioonelebanon/videos/1855981917757533/
+
 def get_posts(tid, pp):
     resp = requests.get(f'{site_domain}wp-json/wp/v2/posts?tags={tid}&per_page={pp}')
     if resp.status_code == 200:
@@ -112,33 +114,50 @@ messenger = MessengerClient(access_token=os.environ['FACEBOOK_TOKEN'])
 
 # noinspection PyBroadException
 def reply_lib(user_id, msg=None, pload=None):
-    msg = msg.lower() if msg else ''
+    msg = msg.upper() if msg else ''
     try:
         recipient = messages.Recipient(recipient_id=user_id)
         # sub_id = db_query(user_id, 0) # Note: check user
-        # TODO! Добавить help и продумать стартовое сообщение
         # BEGIN MENU ##
-        if msg == 'test':
-            pback_one = elements.PostbackButton(
-                title='Button One',
-                payload='PB_ONE'
+        # TODO! Ответы в обычных кнопках не более 20 символов
+        if pload == 'START_MESSAGE' or msg == 'START_MESSAGE':
+            r_msg = "Hi! Welcome to Radio One Lebanon Messenger." \
+                    "We'd love to share the hottest Celeb & Lifestyle Stories with you and notify you when our Live Programs start."
+            pback_stories = elements.PostbackButton(
+                title="Subscribe stories",  # Great, send me your best stories daily.
+                payload='WANT_SUB_STORIES'
             )
-            pback_two = elements.PostbackButton(
-                title='Button Two',
-                payload='PB_TWO'
+            pback_liveprog = elements.PostbackButton(
+                title="Subscribe Programs",  # Love your Programs. Notify me when they start.
+                payload='WANT_SUB_LIVEPROG'
             )
-            share_el = elements.Element(
-                title='Test GenericTemplate',
-                subtitle='Subtitle for this here.',
-                image_url='https://farbio.xyz/images/ava.jpg',
-                buttons=[pback_one, pback_two]
+            pback_nosub = elements.PostbackButton(
+                title="Not now, thank you",
+                payload='NOTHING_SUB'
             )
-            template = templates.GenericTemplate([share_el])
+            template = templates.ButtonTemplate(
+                text=r_msg,
+                buttons=[pback_stories, pback_liveprog, pback_nosub]
+            )
+            attachment = attachments.TemplateAttachment(template=template)
+            message = messages.Message(attachment=attachment)
+        elif pload == 'SETTINGS' or msg == 'HELP':
+            pback_mng_alerts = elements.PostbackButton(
+                title='Manage you alerts',
+                payload='MNG_ALERTS'
+            )
+            el_settings = elements.Element(
+                title='Personalize notifications',
+                # subtitle='Send me your best stories daily.',
+                # image_url='https://farbio.xyz/images/ava.jpg',
+                buttons=[pback_mng_alerts]
+            )
+            template = templates.GenericTemplate([el_settings])
             attachment = attachments.TemplateAttachment(template=template)
             message = messages.Message(attachment=attachment)
         #############
         # TODO! Subtitle и картинки для категорий настройках
-        elif pload == 'MNG_ALERTS' or msg == 'help':
+        elif pload == 'MNG_ALERTS':
             pback_en_stor = elements.PostbackButton(
                 title='Enable Alerts',
                 payload='EN_SUB_STORIES'
@@ -172,11 +191,10 @@ def reply_lib(user_id, msg=None, pload=None):
             attachment = attachments.TemplateAttachment(template=template)
             message = messages.Message(attachment=attachment)
         #############
-        # TODO! Взять у Кати ответ на запрос новостей
-        elif pload == 'WANT_SUB_STORIES':
-
-            # msg = f'You will start receiving the daily briefing\n' \
-            #      f'You can change your subscription at any time by typing "help"\n'
+        elif pload == 'WANT_SUB_STORIES' or msg == 'WANT_SUB_STORIES':
+            r_msg = f'You will start receiving the daily briefing\n' \
+                    f'You can change your subscription at any time by typing "help"\n' \
+                    f'Would you like to see the hottest Stories now?'
             qr_celebrity = quick_replies.QuickReplyItem(
                 content_type='text',
                 title='Celebrity',
@@ -198,7 +216,7 @@ def reply_lib(user_id, msg=None, pload=None):
                 payload='GET_LSTYLE'
             )
             replies = quick_replies.QuickReplies(quick_replies=[qr_celebrity, qr_music, qr_rships, qr_lstyle])
-            message = messages.Message(text='Would you like to see the hottest Stories now?', quick_replies=replies)
+            message = messages.Message(text=r_msg, quick_replies=replies)
         #############
         elif pload == 'WANT_SUB_LIVEPROG':
             r_msg = f'Great! We`ll send you a message before our Live Program start\n' \
@@ -216,30 +234,43 @@ def reply_lib(user_id, msg=None, pload=None):
             attachment = attachments.TemplateAttachment(template=template)
             message = messages.Message(attachment=attachment)
         #############
-        # TODO! Ответы в обычных кнопках не более 20 символов
         else:
-            r_msg = "Hi! Welcome to Radio One Lebanon Messenger." \
-                    "We'd love to share the hottest Celeb & Lifestyle Stories with you and notify you when our Live Programs start."
-            pback_stories = elements.PostbackButton(
-                title="Subscribe stories",  # Great, send me your best stories daily.
-                payload='WANT_SUB_STORIES'
+            r_msg = 'How can i help you?'
+            qr_celebrity = quick_replies.QuickReplyItem(
+                content_type='text',
+                title='Celebrity',
+                payload='GET_CELEBRITY'
             )
-            pback_liveprog = elements.PostbackButton(
-                title="Subscribe Programs",  # Love your Programs. Notify me when they start.
-                payload='WANT_SUB_LIVEPROG'
+            qr_music = quick_replies.QuickReplyItem(
+                content_type='text',
+                title='Music',
+                payload='GET_MUSIC'
             )
-            pback_nosub = elements.PostbackButton(
-                title="No now, thank you",
-                payload='NOTHING_SUB'
+            qr_rships = quick_replies.QuickReplyItem(
+                content_type='text',
+                title='Relationships',
+                payload='GET_RSHIPS'
             )
-            template = templates.ButtonTemplate(
-                text=r_msg,
-                buttons=[pback_stories, pback_liveprog, pback_nosub]
+            qr_lstyle = quick_replies.QuickReplyItem(
+                content_type='text',
+                title='Lifestyle',
+                payload='GET_LSTYLE'
             )
-            attachment = attachments.TemplateAttachment(template=template)
-            message = messages.Message(attachment=attachment)
+            qr_livepg = quick_replies.QuickReplyItem(
+                content_type='text',
+                title='Live Programs',
+                payload='GET_LIVEPG'
+            )
+            qr_settings = quick_replies.QuickReplyItem(
+                content_type='text',
+                title='Settings',
+                payload='SETTINGS'
+            )
+            replies = quick_replies.QuickReplies(
+                quick_replies=[qr_celebrity, qr_music, qr_rships, qr_lstyle, qr_livepg, qr_settings])
+            message = messages.Message(text=r_msg, quick_replies=replies)
         # END OF MENU #
-        app.logger.info(f'Response msg: {message}\nTo: {recipient}')
+        app.logger.info(f'Response for {user_id}')
         req = messages.MessageRequest(recipient, message)
         messenger.send(req)
     except Exception as excp:
@@ -250,18 +281,18 @@ def reply_lib(user_id, msg=None, pload=None):
 def handle_incoming_messages():
     try:
         data = request.json
-        sender = data['entry'][0]['messaging'][0]['sender']['id']
-        msg = data['entry'][0]['messaging'][0]
+        entry_msg = data['entry'][0]['messaging'][0]
+        sender = entry_msg['sender']['id']
         app.logger.info(f'Request: {data}')
-        if 'postback' in msg:
-            pload = msg['postback']['payload']
+        if 'postback' in entry_msg:
+            pload = entry_msg['postback']['payload']
             threading.Thread(target=reply_lib(sender, pload=pload)).start()
-        elif 'message' in msg:
-            if 'quick_reply' in msg:
-                pload = msg['quick_reply']['payload']
+        elif 'message' in entry_msg:
+            if 'quick_reply' in entry_msg:
+                pload = entry_msg['quick_reply']['payload']
                 threading.Thread(target=reply_lib(sender, pload=pload)).start()
-            elif 'text' in msg:
-                message = msg['text']
+            elif 'text' in entry_msg['message']:
+                message = entry_msg['message']['text']
                 threading.Thread(target=reply_lib(sender, msg=message)).start()
     except Exception as excp:
         app.logger.exception('Except hand_msg:', exc_info=excp)
@@ -279,10 +310,10 @@ def verify(get_log=''):
         return request.args["hub.challenge"], 200
     for line in list(open('file.log')):
         if 'ERROR' in line:
-            line = '<span style="color: #F44336">• ' + line + '</span>'
+            line = '<span style="color: #F44336">' + line + '</span>'
         elif 'WARNING' in line:
-            line = '<span style="color: #9C27B0">• ' + line + '</span>'
-        get_log += '• ' + line
+            line = '<span style="color: #9C27B0">' + line + '</span>'
+        get_log += line
     return render_template('log.html', log_text=Markup(get_log), date=datetime.datetime.now(),
                            threads=threading.active_count())
 
@@ -291,7 +322,7 @@ def web_thread():
     if __name__ == '__main__':
         handler = logging.FileHandler('file.log')
         handler.setLevel(logging.INFO)
-        handler.setFormatter(Formatter('%(asctime)s | %(levelname)s: %(message)s'))
+        handler.setFormatter(Formatter('• %(asctime)s | %(levelname)s: %(message)s'))
         app.logger.addHandler(handler)
         app.run(debug=True, host=os.environ.get('address', '0.0.0.0'), port=int(os.environ.get('PORT', 80)))
 
