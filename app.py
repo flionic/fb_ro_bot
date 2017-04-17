@@ -145,15 +145,18 @@ messenger = MessengerClient(access_token=os.environ['FACEBOOK_TOKEN'])
 
 # noinspection PyBroadException
 def reply_lib(user_id, msg=None, pload=None, message=None):
-    msg = msg.upper() if msg else ''
-    pload = msg if not pload else pload
+    cmd_msg = msg.upper() if msg else ''
+    pload = cmd_msg if not pload else pload
     try:
         recipient = messages.Recipient(recipient_id=user_id)
         sub_id = db_query(user_id, 'SELECT')  # Note: check user
         app.logger.info(f'User: {user_id} | Subscribe id: {sub_id}')
         # BEGIN MENU ##
         # TODO! Ответы в обычных кнопках не более 20 символов
-        if pload == 'START_MESSAGE':
+        if msg and admin_pass in msg:
+            nl_msg = msg.replace(admin_pass, '')
+            message = messages.Message(text=f'Newsletter started: "{nl_msg}"')
+        elif pload == 'START_MESSAGE':
             r_msg = "Hi! Welcome to Radio One Lebanon Messenger." \
                     "We'd love to share the hottest Celeb & Lifestyle Stories with you and notify you when our Live Programs start."
             pback_stories = elements.PostbackButton(
@@ -174,11 +177,11 @@ def reply_lib(user_id, msg=None, pload=None, message=None):
             )
             attachment = attachments.TemplateAttachment(template=template)
             message = messages.Message(attachment=attachment)
-        elif msg == 'GET_NEWS':
+        elif cmd_msg == 'GET_NEWS':
             template = templates.GenericTemplate(get_posts('51'))
             attachment = attachments.TemplateAttachment(template=template)
             message = messages.Message(attachment=attachment)
-        elif msg == 'SET_START_PLOAD':
+        elif cmd_msg == 'SET_START_PLOAD':
             message = messages.Message(text=set_start_msg('START_MESSAGE'))
         # Settings / help
         elif pload == 'SETTINGS' or msg == 'HELP':
