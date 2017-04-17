@@ -8,22 +8,53 @@ import messages
 import quick_replies
 import MySQLdb
 import logging
+import html
 from logging import Formatter
 
 app = Flask(__name__, static_folder='web/static', template_folder='web')
+# site_domain = 'http://worket.tk/'
 # old imports #redirect, render_template, # webhooks
 # wp parse sample = site_domain + 'wp-json/wp/v2/posts?tags=38&per_page=1'
-site_domain = 'http://worket.tk/'
+
+lives_link = 'https://www.facebook.com/Radioonelebanon/videos/1855981917757533/'
+categories = {'Celebrity': '48', 'Music': '51', 'Relationships': '236', 'Lifestyle': '231'}
+
 admin_pass = 'LYb25FwFO7zOjUO5zafgiTiyIyRbVNwqeIj'
 
+# categories_link http://www.radioone.fm/wp-json/wp/v2/posts?categories=
 
-# lives link https://www.facebook.com/Radioonelebanon/videos/1855981917757533/
 
-def get_posts(tid, pp):
-    resp = requests.get(f'{site_domain}wp-json/wp/v2/posts?tags={tid}&per_page={pp}')
-    if resp.status_code == 200:
-        resp.json()
-        return True
+# def get_posts(tid, pp):
+#     resp = requests.get(f'{site_domain}wp-json/wp/v2/posts?tags={tid}&per_page={pp}')
+#     if resp.status_code == 200:
+#         resp.json()
+#         return True
+
+def get_posts(category_id):
+    url = f'http://www.radioone.fm/wp-json/wp/v2/posts?categories={category_id}&per_page=5'
+    resp = requests.get(url).json()
+    all_elem = []
+    for i in resp:
+        img_attach = requests.get(i['_links']['wp:attachment'][0]['href']).json()
+        if img_attach:
+            img = img_attach[0]['source_url']
+        else:
+            img_media = requests.get(i['_links']['wp:featuredmedia'][0]['href']).json()
+            img = img_media['source_url'] if 'source_url' in img_media else 'http://www.radioone.fm/wp-content/uploads/2017/04/radiologo.png'
+        title = html.unescape(i['title']['rendered'])
+        subtitle = Markup(html.unescape(i['excerpt']['rendered']))
+        button = elements.WebUrlButton(
+            title='Read more',
+            url=i['link']
+        )
+        element = elements.Element(
+            title=title[:40] + '..' if len(title) > 40 else title,
+            subtitle=subtitle[3:75] + '..' if len(subtitle) > 75 else subtitle[3:-3],
+            image_url=img,
+            buttons=[button]
+        )
+        all_elem.append(element)
+    return all_elem
 
 
 def db_query(user_id, query, sub_ib=0):
@@ -38,7 +69,7 @@ def db_query(user_id, query, sub_ib=0):
             app.logger.info(f'SQL Req: {sql_req[query]}')
             cursor.execute(sql)
             row = cursor.fetchone()
-            sql_resp = row[0] if row is not None else None
+            sql_resp = row[0] if row else None
             app.logger.info(f'SQL Resp: {sql_resp}')
             if query == 'SELECT':
                 return sql_resp if sql_resp else None
@@ -127,22 +158,23 @@ messenger = MessengerClient(access_token=os.environ['FACEBOOK_TOKEN'])
 # noinspection PyBroadException
 def reply_lib(user_id, msg=None, pload=None, message=None):
     msg = msg.upper() if msg else ''
+    pload = msg if not pload else pload
     try:
         recipient = messages.Recipient(recipient_id=user_id)
         sub_id = db_query(user_id, 'SELECT')  # Note: check user
         app.logger.info(f'User: {user_id} | Subscribe id: {sub_id}')
         # BEGIN MENU ##
         # TODO! Ответы в обычных кнопках не более 20 символов
-        if pload == 'START_MESSAGE' or msg == 'START_MESSAGE':
+        if pload == 'START_MESSAGE':
             r_msg = "Hi! Welcome to Radio One Lebanon Messenger." \
                     "We'd love to share the hottest Celeb & Lifestyle Stories with you and notify you when our Live Programs start."
             pback_stories = elements.PostbackButton(
                 title="Subscribe stories",  # Great, send me your best stories daily.
-                payload='WANT_SUB_STORIES'
+                payload='EN_SUB_STORIES'
             )
             pback_liveprog = elements.PostbackButton(
                 title="Subscribe Programs",  # Love your Programs. Notify me when they start.
-                payload='WANT_SUB_LIVEPROG'
+                payload='EN_SUB_LIVEPROG'
             )
             pback_nosub = elements.PostbackButton(
                 title="Not now, thank you",
@@ -152,6 +184,10 @@ def reply_lib(user_id, msg=None, pload=None, message=None):
                 text=r_msg,
                 buttons=[pback_stories, pback_liveprog, pback_nosub]
             )
+            attachment = attachments.TemplateAttachment(template=template)
+            message = messages.Message(attachment=attachment)
+        elif msg == 'GET_NEWS':
+            template = templates.GenericTemplate(get_posts('51'))
             attachment = attachments.TemplateAttachment(template=template)
             message = messages.Message(attachment=attachment)
         elif msg == 'SET_START_PLOAD':
@@ -172,7 +208,7 @@ def reply_lib(user_id, msg=None, pload=None, message=None):
             message = messages.Message(attachment=attachment)
         #############
         # TODO! Subtitle и картинки для категорий настройках
-        elif pload == 'MNG_ALERTS' or msg == 'MNG_ALERTS':
+        elif pload == 'MNG_ALERTS':
             if int(sub_id) == 1 or int(sub_id) == 3:
                 pback_stor = elements.PostbackButton(
                     title='Disable Alerts',
@@ -193,12 +229,12 @@ def reply_lib(user_id, msg=None, pload=None, message=None):
             if int(sub_id) == 2 or int(sub_id) == 3:
                 pback_lstyle = elements.PostbackButton(
                     title='Disable Alerts',
-                    payload='DIS_SUB_LSTYLE'
+                    payload='DIS_SUB_LIVEPROG'
                 )
             else:
                 pback_lstyle = elements.PostbackButton(
                     title='Enable Alerts',
-                    payload='EN_SUB_LSTYLE'
+                    payload='EN_SUB_LIVEPROG'
                 )
             el_lifestyle = elements.Element(
                 title='Life Programs',
@@ -210,7 +246,7 @@ def reply_lib(user_id, msg=None, pload=None, message=None):
             attachment = attachments.TemplateAttachment(template=template)
             message = messages.Message(attachment=attachment)
         #############
-        elif pload == 'EN_SUB_STORIES' or msg == 'EN_SUB_STORIES':
+        elif pload == 'EN_SUB_STORIES':
             r_msg = f'\nYou will start receiving the daily briefing\n' \
                     f'You can change your subscription at any time by typing "help"\n' \
                     f'Would you like to see the hottest Stories now?'
@@ -246,50 +282,18 @@ def reply_lib(user_id, msg=None, pload=None, message=None):
                 db_query(user_id, 'UPDATE', int(sub_id) - 1)
             reply_lib(user_id, pload='MNG_ALERTS')
         #############
-        elif pload == 'EN_SUB_LSTYLE':
-            r_msg = f'\nYou will start receiving the daily briefing\n' \
-                    f'You can change your subscription at any time by typing "help"\n' \
-                    f'Would you like to see the hottest Stories now?'
+        elif pload == 'EN_SUB_LIVEPROG':
+            r_msg = f'Great! We`ll send you a message before our Live Program start\n' \
+                    f'You can change your subscription at any time by typing \"help\"\n' \
+                    f'Would you like to view our recent lifestreams?'
             if sub_id and int(sub_id) != 2 and int(sub_id) != 3:
                 db_query(user_id, 'UPDATE', int(sub_id) + 2)
             elif not sub_id:
                 db_query(user_id, 'INSERT', 2)
-            qr_celebrity = quick_replies.QuickReplyItem(
-                content_type='text',
-                title='Celebrity',
-                payload='GET_CELEBRITY'
-            )
-            qr_music = quick_replies.QuickReplyItem(
-                content_type='text',
-                title='Music',
-                payload='GET_MUSIC'
-            )
-            qr_rships = quick_replies.QuickReplyItem(
-                content_type='text',
-                title='Relationships',
-                payload='GET_RSHIPS'
-            )
-            qr_lstyle = quick_replies.QuickReplyItem(
-                content_type='text',
-                title='Lifestyle',
-                payload='GET_LSTYLE'
-            )
-            replies = quick_replies.QuickReplies(quick_replies=[qr_celebrity, qr_music, qr_rships, qr_lstyle])
-            message = messages.Message(text=r_msg, quick_replies=replies)
-        #############
-        elif pload == 'DIS_SUB_LSTYLE':
-            if int(sub_id) == 2 or int(sub_id) == 3:
-                db_query(user_id, 'UPDATE', int(sub_id) - 2)
-            reply_lib(user_id, pload='MNG_ALERTS')
-        #############
-        elif pload == 'WANT_SUB_LIVEPROG':
-            r_msg = f'Great! We`ll send you a message before our Live Program start\n' \
-                    f'You can change your subscription at any time by typing \"help\"\n' \
-                    f'Would you like to view our recent lifestreams?'
             messenger.send(messages.MessageRequest(recipient, messages.Message(text=r_msg)))
             pback_lives = elements.PostbackButton(
                 title='Yes, sure',
-                payload='WANT_SUB_LIVE'
+                payload='GET_LIVEPG'
             )
             template = templates.ButtonTemplate(
                 text=r_msg,
@@ -298,6 +302,40 @@ def reply_lib(user_id, msg=None, pload=None, message=None):
             attachment = attachments.TemplateAttachment(template=template)
             message = messages.Message(attachment=attachment)
         #############
+        elif pload == 'DIS_SUB_LIVEPROG':
+            if int(sub_id) == 2 or int(sub_id) == 3:
+                db_query(user_id, 'UPDATE', int(sub_id) - 2)
+            reply_lib(user_id, pload='MNG_ALERTS')
+        #############
+        elif pload == 'GET_CELEBRITY':
+            template = templates.GenericTemplate(get_posts(categories['Celebrity']))
+            attachment = attachments.TemplateAttachment(template=template)
+            message = messages.Message(attachment=attachment)
+        elif pload == 'GET_MUSIC':
+            template = templates.GenericTemplate(get_posts(categories['Music']))
+            attachment = attachments.TemplateAttachment(template=template)
+            message = messages.Message(attachment=attachment)
+        elif pload == 'GET_RSHIPS':
+            template = templates.GenericTemplate(get_posts(categories['Relationships']))
+            attachment = attachments.TemplateAttachment(template=template)
+            message = messages.Message(attachment=attachment)
+        elif pload == 'GET_LSTYLE':
+            template = templates.GenericTemplate(get_posts(categories['Lifestyle']))
+            attachment = attachments.TemplateAttachment(template=template)
+            message = messages.Message(attachment=attachment)
+        elif pload == 'GET_LIVEPG':
+            button = elements.WebUrlButton(
+                title='Open last',
+                url=lives_link
+            )
+            element = elements.Element(
+                title='Live Programs',
+                image_url='http://www.radioone.fm/wp-content/uploads/2017/04/radiologo.png',
+                buttons=[button]
+            )
+            template = templates.GenericTemplate([element])
+            attachment = attachments.TemplateAttachment(template=template)
+            message = messages.Message(attachment=attachment)
         else:
             r_msg = 'How can i help you?'
             qr_celebrity = quick_replies.QuickReplyItem(
