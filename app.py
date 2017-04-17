@@ -290,7 +290,6 @@ def reply_lib(user_id, msg=None, pload=None, message=None):
                 db_query(user_id, 'UPDATE', int(sub_id) + 2)
             elif not sub_id:
                 db_query(user_id, 'INSERT', 2)
-            messenger.send(messages.MessageRequest(recipient, messages.Message(text=r_msg)))
             pback_lives = elements.PostbackButton(
                 title='Yes, sure',
                 payload='GET_LIVEPG'
