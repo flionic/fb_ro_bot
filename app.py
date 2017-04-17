@@ -3,6 +3,7 @@ import html
 import logging
 import os
 import threading
+import queue
 from logging import Formatter
 
 import MySQLdb
@@ -14,8 +15,11 @@ import messages
 import quick_replies
 
 # wp parse sample = site_domain + 'wp-json/wp/v2/posts?tags=38&per_page=5'
-app = Flask(__name__, static_folder='web/static', template_folder='web')
 admin_pass = 'LYb25FwFO7zOjUO5zafgiTiyIyRbVNwqeIj'
+app = Flask(__name__, static_folder='web/static', template_folder='web')
+messenger = MessengerClient(access_token=os.environ['FACEBOOK_TOKEN'])
+td_num = 100
+q = queue.Queue()
 
 
 def get_posts(category_id):
@@ -43,6 +47,50 @@ def get_posts(category_id):
         )
         all_elem.append(element)
     return all_elem
+
+
+def send_message(user_id, msg):
+    recipient = messages.Recipient(recipient_id=user_id)
+    message = messages.Message(text=f'{msg}')
+    req = messages.MessageRequest(recipient, message)
+    messenger.send(req)
+
+
+message = ''
+
+
+def newsletter():
+    global q
+    while True:
+        uid = q.get()
+        if uid is None:
+            break
+        print(f"{uid}: {message}")
+        # send_message(uid, msg)
+        q.task_done()
+
+
+def begin_nl(ids, msg):
+    global q, message
+    message = msg
+    threads = []
+    for i in range(td_num):
+        t = threading.Thread(target=newsletter)
+        t.start()
+        threads.append(t)
+
+    for uid in ids:
+        q.put(uid)
+
+    # block until all tasks are done
+    print('q.join()')
+    q.join()
+    # stop workers
+    for i in range(td_num):
+        q.put(None)
+    for t in threads:
+        t.join()
+    message = ''
 
 
 def db_query(user_id, query, sub_ib=0):
@@ -139,10 +187,6 @@ def set_menu():
         return f'{excp}\nSee log for details'
 
 
-# Init facebook client
-messenger = MessengerClient(access_token=os.environ['FACEBOOK_TOKEN'])
-
-
 # noinspection PyBroadException
 def reply_lib(user_id, msg=None, pload=None, message=None):
     cmd_msg = msg.upper() if msg else ''
@@ -156,6 +200,9 @@ def reply_lib(user_id, msg=None, pload=None, message=None):
         if msg and admin_pass in msg:
             nl_msg = msg.replace(admin_pass, '')
             message = messages.Message(text=f'Newsletter started: "{nl_msg}"')
+        elif msg == 'send_message':
+            send_message(user_id, 'working')
+            begin_nl(['1241023309346835', '1241023309346835', '1241023309346835'], 'test')
         elif pload == 'START_MESSAGE':
             r_msg = "Hi! Welcome to Radio One Lebanon Messenger." \
                     "We'd love to share the hottest Celeb & Lifestyle Stories with you and notify you when our Live Programs start."
