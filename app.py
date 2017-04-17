@@ -1,38 +1,25 @@
 import datetime
-from flask import Flask, request, render_template, Markup
-import requests
+import html
+import logging
 import os
 import threading
-from messengerbot import MessengerClient, attachments, templates, elements
-import messages
-import quick_replies
-import MySQLdb
-import logging
-import html
 from logging import Formatter
 
+import MySQLdb
+import requests
+from flask import Flask, request, render_template, Markup
+from messengerbot import MessengerClient, attachments, templates, elements
+
+import messages
+import quick_replies
+
+# wp parse sample = site_domain + 'wp-json/wp/v2/posts?tags=38&per_page=5'
 app = Flask(__name__, static_folder='web/static', template_folder='web')
-# site_domain = 'http://worket.tk/'
-# old imports #redirect, render_template, # webhooks
-# wp parse sample = site_domain + 'wp-json/wp/v2/posts?tags=38&per_page=1'
-
-lives_link = 'https://www.facebook.com/Radioonelebanon/videos/1855981917757533/'
-categories = {'Celebrity': '48', 'Music': '51', 'Relationships': '236', 'Lifestyle': '231'}
-
 admin_pass = 'LYb25FwFO7zOjUO5zafgiTiyIyRbVNwqeIj'
 
-# categories_link http://www.radioone.fm/wp-json/wp/v2/posts?categories=
-
-
-# def get_posts(tid, pp):
-#     resp = requests.get(f'{site_domain}wp-json/wp/v2/posts?tags={tid}&per_page={pp}')
-#     if resp.status_code == 200:
-#         resp.json()
-#         return True
 
 def get_posts(category_id):
-    url = f'http://www.radioone.fm/wp-json/wp/v2/posts?categories={category_id}&per_page=5'
-    resp = requests.get(url).json()
+    resp = requests.get(f'http://www.radioone.fm/wp-json/wp/v2/posts?categories={category_id}&per_page=5').json()
     all_elem = []
     for i in resp:
         img_attach = requests.get(i['_links']['wp:attachment'][0]['href']).json()
@@ -40,9 +27,10 @@ def get_posts(category_id):
             img = img_attach[0]['source_url']
         else:
             img_media = requests.get(i['_links']['wp:featuredmedia'][0]['href']).json()
-            img = img_media['source_url'] if 'source_url' in img_media else 'http://www.radioone.fm/wp-content/uploads/2017/04/radiologo.png'
+            img = img_media['source_url'] if 'source_url' in img_media \
+                else 'http://www.radioone.fm/wp-content/uploads/2017/04/radiologo.png'
         title = html.unescape(i['title']['rendered'])
-        subtitle = Markup(html.unescape(i['excerpt']['rendered']))
+        subtitle = html.unescape(i['excerpt']['rendered'])
         button = elements.WebUrlButton(
             title='Read more',
             url=i['link']
@@ -192,6 +180,7 @@ def reply_lib(user_id, msg=None, pload=None, message=None):
             message = messages.Message(attachment=attachment)
         elif msg == 'SET_START_PLOAD':
             message = messages.Message(text=set_start_msg('START_MESSAGE'))
+        # Settings / help
         elif pload == 'SETTINGS' or msg == 'HELP':
             pback_mng_alerts = elements.PostbackButton(
                 title='Manage you alerts',
@@ -206,9 +195,10 @@ def reply_lib(user_id, msg=None, pload=None, message=None):
             template = templates.GenericTemplate([el_settings])
             attachment = attachments.TemplateAttachment(template=template)
             message = messages.Message(attachment=attachment)
-        #############
         # TODO! Subtitle и картинки для категорий настройках
+        # Alerts Manager
         elif pload == 'MNG_ALERTS':
+            # Stories
             if int(sub_id) == 1 or int(sub_id) == 3:
                 pback_stor = elements.PostbackButton(
                     title='Disable Alerts',
@@ -225,7 +215,7 @@ def reply_lib(user_id, msg=None, pload=None, message=None):
                 image_url='https://farbio.xyz/images/ava.jpg',
                 buttons=[pback_stor]
             )
-            # element 2
+            # Live Programs
             if int(sub_id) == 2 or int(sub_id) == 3:
                 pback_lstyle = elements.PostbackButton(
                     title='Disable Alerts',
@@ -245,7 +235,7 @@ def reply_lib(user_id, msg=None, pload=None, message=None):
             template = templates.GenericTemplate([el_stories, el_lifestyle])
             attachment = attachments.TemplateAttachment(template=template)
             message = messages.Message(attachment=attachment)
-        #############
+        # Sub/unsub stories
         elif pload == 'EN_SUB_STORIES':
             r_msg = f'\nYou will start receiving the daily briefing\n' \
                     f'You can change your subscription at any time by typing "help"\n' \
@@ -281,7 +271,7 @@ def reply_lib(user_id, msg=None, pload=None, message=None):
             if int(sub_id) == 1 or int(sub_id) == 3:
                 db_query(user_id, 'UPDATE', int(sub_id) - 1)
             reply_lib(user_id, pload='MNG_ALERTS')
-        #############
+        # Sub/unsub live programs
         elif pload == 'EN_SUB_LIVEPROG':
             r_msg = f'Great! We`ll send you a message before our Live Program start\n' \
                     f'You can change your subscription at any time by typing \"help\"\n' \
@@ -300,32 +290,32 @@ def reply_lib(user_id, msg=None, pload=None, message=None):
             )
             attachment = attachments.TemplateAttachment(template=template)
             message = messages.Message(attachment=attachment)
-        #############
+        ###
         elif pload == 'DIS_SUB_LIVEPROG':
             if int(sub_id) == 2 or int(sub_id) == 3:
                 db_query(user_id, 'UPDATE', int(sub_id) - 2)
             reply_lib(user_id, pload='MNG_ALERTS')
-        #############
+        # Get news from site
         elif pload == 'GET_CELEBRITY':
-            template = templates.GenericTemplate(get_posts(categories['Celebrity']))
+            template = templates.GenericTemplate(get_posts('48'))
             attachment = attachments.TemplateAttachment(template=template)
             message = messages.Message(attachment=attachment)
         elif pload == 'GET_MUSIC':
-            template = templates.GenericTemplate(get_posts(categories['Music']))
+            template = templates.GenericTemplate(get_posts('51'))
             attachment = attachments.TemplateAttachment(template=template)
             message = messages.Message(attachment=attachment)
         elif pload == 'GET_RSHIPS':
-            template = templates.GenericTemplate(get_posts(categories['Relationships']))
+            template = templates.GenericTemplate(get_posts('236'))
             attachment = attachments.TemplateAttachment(template=template)
             message = messages.Message(attachment=attachment)
         elif pload == 'GET_LSTYLE':
-            template = templates.GenericTemplate(get_posts(categories['Lifestyle']))
+            template = templates.GenericTemplate(get_posts('231'))
             attachment = attachments.TemplateAttachment(template=template)
             message = messages.Message(attachment=attachment)
         elif pload == 'GET_LIVEPG':
             button = elements.WebUrlButton(
                 title='Open last',
-                url=lives_link
+                url='https://www.facebook.com/Radioonelebanon/videos/1855981917757533/'
             )
             element = elements.Element(
                 title='Live Programs',
@@ -335,6 +325,7 @@ def reply_lib(user_id, msg=None, pload=None, message=None):
             template = templates.GenericTemplate([element])
             attachment = attachments.TemplateAttachment(template=template)
             message = messages.Message(attachment=attachment)
+        # How can i help you?
         else:
             r_msg = 'How can i help you?'
             qr_celebrity = quick_replies.QuickReplyItem(
