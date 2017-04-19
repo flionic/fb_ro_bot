@@ -116,7 +116,7 @@ def db_query(user_id, query, sub_ib=0):
 
 
 # Facebook Manual Module
-def subscribe_this():  # -> :type domain: list
+def subscribe_this():
     resp = requests.post(
         "https://graph.facebook.com/v2.6/me/subscribed_apps?access_token=" + os.environ['FACEBOOK_TOKEN'])
     app.logger.info(f'Subscribe this:\n{resp.content}')
@@ -529,8 +529,9 @@ def web_thread():
         handler.setFormatter(Formatter('• %(asctime)s | %(levelname)s: %(message)s'))
         app.logger.addHandler(handler)
         app.run(debug=True, host=os.environ.get('address', '0.0.0.0'), port=int(os.environ.get('PORT', 80)))
+        set_menu()
+        subscribe_this()
 
-set_menu()
-subscribe_this()
+
 flask_thread = threading.Thread(target=web_thread())
 flask_thread.start()
