@@ -56,7 +56,7 @@ def send_message(user_id, msg):
     messenger.send(req)
 
 
-message = ''
+nl_message = ''
 
 
 def newsletter():
@@ -65,14 +65,14 @@ def newsletter():
         uid = q.get()
         if uid is None:
             break
-        print(f"{uid}: {message}")
+        print(f"{uid}: {nl_message}")
         # send_message(uid, msg)
         q.task_done()
 
 
 def begin_nl(ids, msg):
-    global q, message
-    message = msg
+    global q, nl_message
+    nl_message = msg
     threads = []
     for i in range(td_num):
         t = threading.Thread(target=newsletter)
@@ -90,13 +90,14 @@ def begin_nl(ids, msg):
         q.put(None)
     for t in threads:
         t.join()
-    message = ''
+    nl_message = ''
 
 
 def db_query(user_id, query, sub_ib=0):
     try:
         mysql = MySQLdb.connect(host=os.environ['DB_HOST'], user=os.environ['DB_USER'], password=os.environ['DB_PASS'],
                                 db='fbmsgbot', autocommit=True)
+        print(mysql)
         sql_req = {'SELECT': f'SELECT sub_id FROM bot_rol WHERE id=\'{int(user_id)}\'',
                    'INSERT': f'INSERT INTO bot_rol (id, sub_id) VALUES (\'{int(user_id)}\', \'{int(sub_ib)}\')',
                    'UPDATE': f'UPDATE bot_rol SET sub_id={sub_ib} WHERE id={int(user_id)}'}
