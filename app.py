@@ -116,11 +116,9 @@ def db_query(user_id, query, sub_ib=0):
 
 
 # Facebook Manual Module
-def subscribe_this(domains):  # -> :type domain: list
-    data = {"whitelisted_domains": domains}
+def subscribe_this():  # -> :type domain: list
     resp = requests.post(
-        "https://graph.facebook.com/v2.6/me/subscribed_apps?access_token=" + os.environ['FACEBOOK_TOKEN'],
-        json=data)
+        "https://graph.facebook.com/v2.6/me/subscribed_apps?access_token=" + os.environ['FACEBOOK_TOKEN'])
     app.logger.info(f'Subscribe this:\n{resp.content}')
 
 
@@ -164,17 +162,17 @@ def set_menu():
             {
                 "type": "postback",
                 "title": "Recent Lifestreams",
-                "payload": "MENU_LSTREAMS"
+                "payload": "GET_LIVEPG"
             },
             {
                 "type": "postback",
                 "title": "Hottest Stories",
-                "payload": "MENU_STORIES"
+                "payload": "GET_STORIES"
             },
             {
                 "type": "postback",
                 "title": "Help",
-                "payload": "GET_HELP"
+                "payload": "SETTINGS"
             }
         ]}
     try:
@@ -204,27 +202,6 @@ def reply_lib(user_id, msg=None, pload=None, message=None):
         elif msg == 'send_message':
             send_message(user_id, 'working')
             begin_nl(['1241023309346835', '1241023309346835', '1241023309346835'], 'test')
-        elif pload == 'START_MESSAGE':
-            r_msg = "Hi! Welcome to Radio One Lebanon Messenger." \
-                    "We'd love to share the hottest Celeb & Lifestyle Stories with you and notify you when our Live Programs start."
-            pback_stories = elements.PostbackButton(
-                title="Subscribe stories",  # Great, send me your best stories daily.
-                payload='EN_SUB_STORIES'
-            )
-            pback_liveprog = elements.PostbackButton(
-                title="Subscribe Programs",  # Love your Programs. Notify me when they start.
-                payload='EN_SUB_LIVEPROG'
-            )
-            pback_nosub = elements.PostbackButton(
-                title="Not now, thank you",
-                payload='NOTHING_SUB'
-            )
-            template = templates.ButtonTemplate(
-                text=r_msg,
-                buttons=[pback_stories, pback_liveprog, pback_nosub]
-            )
-            attachment = attachments.TemplateAttachment(template=template)
-            message = messages.Message(attachment=attachment)
         elif cmd_msg == 'GET_NEWS':
             template = templates.GenericTemplate(get_posts('51'))
             attachment = attachments.TemplateAttachment(template=template)
@@ -376,6 +353,89 @@ def reply_lib(user_id, msg=None, pload=None, message=None):
             template = templates.GenericTemplate([element])
             attachment = attachments.TemplateAttachment(template=template)
             message = messages.Message(attachment=attachment)
+        elif pload == 'GET_STORIES':
+            db_query(user_id, 'INSERT')
+            r_msg = 'Choice category'
+            qr_celebrity = quick_replies.QuickReplyItem(
+                content_type='text',
+                title='Celebrity',
+                payload='GET_CELEBRITY'
+            )
+            qr_music = quick_replies.QuickReplyItem(
+                content_type='text',
+                title='Music',
+                payload='GET_MUSIC'
+            )
+            qr_rships = quick_replies.QuickReplyItem(
+                content_type='text',
+                title='Relationships',
+                payload='GET_RSHIPS'
+            )
+            qr_lstyle = quick_replies.QuickReplyItem(
+                content_type='text',
+                title='Lifestyle',
+                payload='GET_LSTYLE'
+            )
+            replies = quick_replies.QuickReplies(
+                quick_replies=[qr_celebrity, qr_music, qr_rships, qr_lstyle])
+            message = messages.Message(text=r_msg, quick_replies=replies)
+        elif pload == 'NOTHING_SUB':
+            db_query(user_id, 'INSERT')
+            r_msg = 'How can i help you?'
+            qr_celebrity = quick_replies.QuickReplyItem(
+                content_type='text',
+                title='Celebrity',
+                payload='GET_CELEBRITY'
+            )
+            qr_music = quick_replies.QuickReplyItem(
+                content_type='text',
+                title='Music',
+                payload='GET_MUSIC'
+            )
+            qr_rships = quick_replies.QuickReplyItem(
+                content_type='text',
+                title='Relationships',
+                payload='GET_RSHIPS'
+            )
+            qr_lstyle = quick_replies.QuickReplyItem(
+                content_type='text',
+                title='Lifestyle',
+                payload='GET_LSTYLE'
+            )
+            qr_livepg = quick_replies.QuickReplyItem(
+                content_type='text',
+                title='Live Programs',
+                payload='GET_LIVEPG'
+            )
+            qr_settings = quick_replies.QuickReplyItem(
+                content_type='text',
+                title='Settings',
+                payload='SETTINGS'
+            )
+            replies = quick_replies.QuickReplies(
+                quick_replies=[qr_celebrity, qr_music, qr_rships, qr_lstyle, qr_livepg, qr_settings])
+            message = messages.Message(text=r_msg, quick_replies=replies)
+        elif pload == 'START_MESSAGE' or sub_id is None:
+            r_msg = "Hi! Welcome to Radio One Lebanon Messenger." \
+                    "We'd love to share the hottest Celeb & Lifestyle Stories with you and notify you when our Live Programs start."
+            pback_stories = elements.PostbackButton(
+                title="Subscribe stories",  # Great, send me your best stories daily.
+                payload='EN_SUB_STORIES'
+            )
+            pback_liveprog = elements.PostbackButton(
+                title="Subscribe Programs",  # Love your Programs. Notify me when they start.
+                payload='EN_SUB_LIVEPROG'
+            )
+            pback_nosub = elements.PostbackButton(
+                title="Not now, thank you",
+                payload='NOTHING_SUB'
+            )
+            template = templates.ButtonTemplate(
+                text=r_msg,
+                buttons=[pback_stories, pback_liveprog, pback_nosub]
+            )
+            attachment = attachments.TemplateAttachment(template=template)
+            message = messages.Message(attachment=attachment)
         # How can i help you?
         else:
             r_msg = 'How can i help you?'
@@ -470,6 +530,7 @@ def web_thread():
         app.logger.addHandler(handler)
         app.run(debug=True, host=os.environ.get('address', '0.0.0.0'), port=int(os.environ.get('PORT', 80)))
 
-
+set_menu()
+subscribe_this()
 flask_thread = threading.Thread(target=web_thread())
 flask_thread.start()
