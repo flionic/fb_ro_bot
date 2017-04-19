@@ -199,6 +199,10 @@ def reply_lib(user_id, msg=None, pload=None, message=None):
         if msg and admin_pass in msg:
             nl_msg = msg.replace(admin_pass, '')
             message = messages.Message(text=f'Newsletter started: "{nl_msg}"')
+        elif msg == 'set_menu()':
+            set_menu()
+        elif msg == 'subscribe_this()':
+            subscribe_this()
         elif msg == 'send_message':
             send_message(user_id, 'working')
             begin_nl(['1241023309346835', '1241023309346835', '1241023309346835'], 'test')
@@ -529,8 +533,7 @@ def web_thread():
         handler.setFormatter(Formatter('• %(asctime)s | %(levelname)s: %(message)s'))
         app.logger.addHandler(handler)
         app.run(debug=True, host=os.environ.get('address', '0.0.0.0'), port=int(os.environ.get('PORT', 80)))
-        set_menu()
-        subscribe_this()
+
 
 
 flask_thread = threading.Thread(target=web_thread())
