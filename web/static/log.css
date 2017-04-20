@@ -365,7 +365,6 @@ div.pin-prompt .inner {
     overflow-x: auto;
     white-space: pre-line;
     height: 0;
-    /*max-height: 465px;*/
 }
 
 body, div.plain pre {
@@ -380,18 +379,6 @@ h2 {
     margin: 0.3em 0 0 0;
 }
 
-@media (width: 1600px) {
-    #log-str {
-        /*max-height: 550px;*/
-    }
-}
-
-@media (width: 1920px) {
-    #log-str {
-        /*max-height: 770px;*/
-    }
-}
-
 /* Only mobile */
 @media (max-width: 768px) {
     div.plain {
@@ -399,7 +386,6 @@ h2 {
     }
 
     #log-str {
-        /*max-height: 450px;*/
         white-space: pre;
         font-size: 7px;
     }
