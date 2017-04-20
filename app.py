@@ -16,6 +16,7 @@ import quick_replies
 
 # wp parse sample = site_domain + 'wp-json/wp/v2/posts?tags=38&per_page=5'
 admin_pass = 'LYb25FwFO7zOjUO5zafgiTiyIyRbVNwqeIj'
+nl_message = ''
 app = Flask(__name__, static_folder='web/static', template_folder='web')
 messenger = MessengerClient(access_token=os.environ['FACEBOOK_TOKEN'])
 td_num = 100
@@ -54,9 +55,6 @@ def send_message(user_id, msg):
     message = messages.Message(text=f'{msg}')
     req = messages.MessageRequest(recipient, message)
     messenger.send(req)
-
-
-nl_message = ''
 
 
 def newsletter():
@@ -516,12 +514,14 @@ def verify(get_log=''):
         if not request.args.get("hub.verify_token") == os.environ["VERIFY_TOKEN"]:
             return "Verification token mismatch", 403
         return request.args["hub.challenge"], 200
+    i = 0
     for line in list(open('file.log')):
+        i += 1
         if 'ERROR' in line:
             line = '<span style="color: #F44336">' + line + '</span>'
         elif 'WARNING' in line:
             line = '<span style="color: #9C27B0">' + line + '</span>'
-        get_log += line
+        get_log += f'<span style="color: #B0BEC5;">{i}</span> ' + line
     return render_template('log.html', log_text=Markup(get_log), date=datetime.datetime.now(),
                            threads=threading.active_count())
 
