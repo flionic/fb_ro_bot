@@ -14,5 +14,5 @@ setup(
     license='GNU',
     author='Bionic Leha',
     author_email='i@farbio.xyz',
-    description='Using Facebook Messanger Bot API for Radio One page on FB'
+    description='Using Facebook Messenger Bot API for Radio One page on FB'
 )

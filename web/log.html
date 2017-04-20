@@ -39,5 +39,23 @@
         logText.style.height = window.innerHeight - 5 - document.body.offsetHeight + "px";
     }
 </script>
+<script language="JavaScript" type="text/javascript">
+    function update_values() {
+            $SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
+            $.getJSON($SCRIPT_ROOT+"/_update_log",
+                function(data) {
+                    console.log(data)
+                });
+    }
+</script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+
+<script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/socket.io/1.3.6/socket.io.min.js"></script>
+<script type="text/javascript" charset="utf-8">
+//    var socket = io.connect('http://' + document.domain + ':' + location.port);
+//    socket.on('connect', function() {
+//        socket.emit('my event', {data: 'I\'m connected!'});
+//    });
+</script>
 </body>
 </html>

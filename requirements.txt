@@ -2,3 +2,4 @@ requests==2.13.0
 flask==0.12.1
 messengerbot==0.1.4
 mysqlclient==1.3.10
+flask-socketio==2.8.6

@@ -8,7 +8,8 @@ from logging import Formatter
 
 import MySQLdb
 import requests
-from flask import Flask, request, render_template, Markup
+from flask import Flask, request, render_template, Markup, jsonify, session
+from flask_socketio import SocketIO, emit, join_room, leave_room, close_room, rooms, disconnect
 from messengerbot import MessengerClient, attachments, templates, elements
 
 import messages
@@ -18,8 +19,11 @@ import quick_replies
 admin_pass = 'LYb25FwFO7zOjUO5zafgiTiyIyRbVNwqeIj'
 nl_message = ''
 app = Flask(__name__, static_folder='web/static', template_folder='web')
+app.config['SECRET_KEY'] = 'secret!'
+socketio = SocketIO(app, async_mode=None)
 messenger = MessengerClient(access_token=os.environ['FACEBOOK_TOKEN'])
 td_num = 100
+thread = ''
 q = queue.Queue()
 
 
@@ -506,7 +510,7 @@ def handle_incoming_messages():
         return f'post: {request.json}'
 
 
-@app.route('/', methods=['GET'])
+@app.route('/log', methods=['GET'])
 def verify(get_log=''):
     # when the endpoint is registered as a webhook, it must echo back
     # the 'hub.challenge' value it receives in the query arguments
@@ -526,6 +530,109 @@ def verify(get_log=''):
                            threads=threading.active_count())
 
 
+@app.route('/')
+def index():
+    return render_template('sockets.html')
+
+
+@app.route('/_update_log', methods=['GET'])
+def update_log():
+    log = 'test'
+    return jsonify(line=log)
+
+
+def background_thread():
+    """Example of how to send server generated events to clients."""
+    count = 0
+    while True:
+        socketio.sleep(10)
+        count += 1
+        socketio.emit('my_response',
+                      {'data': 'Server generated event', 'count': count},
+                      namespace='/test')
+
+
+@socketio.on('my_event', namespace='/test')
+def test_message(message):
+    session['receive_count'] = session.get('receive_count', 0) + 1
+    emit('my_response',
+         {'data': message['data'], 'count': session['receive_count']})
+
+
+@socketio.on('my_broadcast_event', namespace='/test')
+def test_broadcast_message(message):
+    session['receive_count'] = session.get('receive_count', 0) + 1
+    emit('my_response',
+         {'data': message['data'], 'count': session['receive_count']},
+         broadcast=True)
+
+
+@socketio.on('join', namespace='/test')
+def join(message):
+    join_room(message['room'])
+    session['receive_count'] = session.get('receive_count', 0) + 1
+    emit('my_response',
+         {'data': 'In rooms: ' + ', '.join(rooms()),
+          'count': session['receive_count']})
+
+
+@socketio.on('leave', namespace='/test')
+def leave(message):
+    leave_room(message['room'])
+    session['receive_count'] = session.get('receive_count', 0) + 1
+    emit('my_response',
+         {'data': 'In rooms: ' + ', '.join(rooms()),
+          'count': session['receive_count']})
+
+
+@socketio.on('close_room', namespace='/test')
+def close(message):
+    session['receive_count'] = session.get('receive_count', 0) + 1
+    emit('my_response', {'data': 'Room ' + message['room'] + ' is closing.',
+                         'count': session['receive_count']},
+         room=message['room'])
+    close_room(message['room'])
+
+
+@socketio.on('my_room_event', namespace='/test')
+def send_room_message(message):
+    session['receive_count'] = session.get('receive_count', 0) + 1
+    emit('my_response',
+         {'data': message['data'], 'count': session['receive_count']},
+         room=message['room'])
+
+
+@socketio.on('disconnect_request', namespace='/test')
+def disconnect_request():
+    session['receive_count'] = session.get('receive_count', 0) + 1
+    emit('my_response',
+         {'data': 'Disconnected!', 'count': session['receive_count']})
+    disconnect()
+
+
+@socketio.on('my_ping', namespace='/test')
+def ping_pong():
+    emit('my_pong')
+
+
+@socketio.on('get_log', namespace='/test')
+def log_size():
+    emit('log_count', {'data': str(len(list(open('file.log'))))})
+
+
+@socketio.on('connect', namespace='/test')
+def test_connect():
+    global thread
+    if thread is None:
+        thread = socketio.start_background_task(target=background_thread)
+    emit('my_response', {'data': 'Connected', 'count': 0})
+
+
+@socketio.on('disconnect', namespace='/test')
+def test_disconnect():
+    print('Client disconnected')
+
+
 def web_thread():
     if __name__ == '__main__':
         handler = logging.FileHandler('file.log')
@@ -533,6 +640,7 @@ def web_thread():
         handler.setFormatter(Formatter('• %(asctime)s | %(levelname)s: %(message)s'))
         app.logger.addHandler(handler)
         app.run(debug=True, host=os.environ.get('address', '0.0.0.0'), port=int(os.environ.get('PORT', 80)))
+        # socketio.run(app, debug=True, host=os.environ.get('address', '0.0.0.0'), port=int(os.environ.get('PORT', 80)))
 
 
 flask_thread = threading.Thread(target=web_thread())
