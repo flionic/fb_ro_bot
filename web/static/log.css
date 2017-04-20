@@ -361,20 +361,45 @@ div.pin-prompt .inner {
     border-radius: 2px;
 }
 
-#log_str {
+#log-str {
     overflow-x: auto;
     white-space: pre-line;
-    max-height: 465px;
+    height: 0;
+    /*max-height: 465px;*/
+}
+
+body, div.plain pre {
+    margin: 0;
+}
+
+div.footer {
+    margin: 5px 0;
+}
+
+h2 {
+    margin: 0.3em 0 0 0;
+}
+
+@media (width: 1600px) {
+    #log-str {
+        /*max-height: 550px;*/
+    }
+}
+
+@media (width: 1920px) {
+    #log-str {
+        /*max-height: 770px;*/
+    }
 }
 
 /* Only mobile */
 @media (max-width: 768px) {
-    body, div.plain pre, div.plain {
+    div.plain {
         margin: 0;
     }
 
-    #log_str {
-        max-height: 450px;
+    #log-str {
+        /*max-height: 450px;*/
         white-space: pre;
         font-size: 7px;
     }
@@ -394,7 +419,6 @@ div.pin-prompt .inner {
 
     h2 {
         font-size: 10px;
-        margin: 0.3em 0 0 0;
     }
 
     div.detail p {
@@ -404,6 +428,5 @@ div.pin-prompt .inner {
 
     div.footer {
         font-size: 7px;
-        margin: 5px 0;
     }
 }
