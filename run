@@ -1,0 +1,2 @@
+#! /bin/sh
+env DB_HOST=146.148.21.53 DB_USER=fb_bot DB_PASS=7ccgxbionic7 PORT=5000 VERIFY_TOKEN=test_token FACEBOOK_TOKEN=EAAFpwOoAv2QBAFvx2IWTMW0qUW0jopcPdsCiQg5kFpHlBs6cIozehc8DALMvRUPoVe7jZBKZBX6CzRuEXiCIL9HWZCbLJBhcNGtd4wYCWbnU9thPgpbU1lDZAAqAp3si4F97xgzWiZCAvZBJtLvlDxhHQf3GoNCcMFLsluEP1CMwZDZD /usr/bin/python3.6 -u /var/py/fb_bot/app.py

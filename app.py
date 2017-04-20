@@ -535,6 +535,5 @@ def web_thread():
         app.run(debug=True, host=os.environ.get('address', '0.0.0.0'), port=int(os.environ.get('PORT', 80)))
 
 
-
 flask_thread = threading.Thread(target=web_thread())
 flask_thread.start()
